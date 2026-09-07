@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>บิลค่าเช่าตลาด</title>
+<title>Market Bill</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap">
@@ -330,6 +330,7 @@
   .print-toolbar button.sec{background:#fff;color:#333}
 
   .sheet{
+    position:relative;
     width:148mm;min-height:210mm;background:#fff;color:#111;
     margin:0 auto 16px;padding:11mm 12mm;
     font-size:11.2pt;line-height:1.32;
@@ -353,10 +354,12 @@
   table.s-tb td.c{text-align:center}
   .s-total{display:flex;justify-content:flex-end;gap:16px;margin-top:6px;font-size:12.5pt;font-weight:700}
   .s-total .amt{min-width:34mm;text-align:right}
-  .s-note{margin-top:auto;padding-top:8px;font-size:8.6pt;line-height:1.4;color:#222!important;border-top:1px solid #999}
   table.s-tb td.pad{height:7.2mm}
+  /* footer (หมายเหตุ + ลงชื่อ) — pinned to the same spot at the bottom of every bill */
+  .s-footer{position:absolute;left:0;right:0;bottom:0;padding:0 12mm 11mm}
+  .s-note{padding-top:8px;font-size:8.6pt;line-height:1.4;color:#222!important;border-top:1px solid #999}
   .s-note b{font-weight:700}
-  .s-sign{display:flex;justify-content:space-between;margin-top:15mm;font-size:9pt;gap:20px}
+  .s-sign{display:flex;justify-content:space-between;margin-top:14mm;font-size:9pt;gap:20px}
   .s-sign div{flex:1;text-align:center;border-top:1px dotted #555;padding-top:3px;color:#555!important}
 
   /* summary report sheet (landscape) */
@@ -378,9 +381,10 @@
     @page land{size:A4 landscape;margin:8mm}
     body.printing #printRoot{position:static;background:#fff;padding:0}
     .print-toolbar{display:none}
-    .sheet{box-shadow:none;margin:0;width:auto;min-height:auto;
-      padding:9mm 10mm;page-break-after:always}
+    .sheet{box-shadow:none;margin:0;width:auto;min-height:206mm;height:206mm;
+      box-sizing:border-box;padding:9mm 10mm;page-break-after:always;overflow:hidden}
     .sheet:last-child{page-break-after:auto}
+    .s-footer{padding:0 10mm 9mm}
     body.report-mode .rsheet{box-shadow:none;margin:0;width:auto;max-width:none;padding:0;page:land}
   }
 </style>
@@ -388,7 +392,7 @@
 <body>
 <div class="login-gate" id="loginGate" hidden>
   <div class="login-box">
-    <h2>บิลค่าเช่าตลาด</h2>
+    <h2>Market Bill</h2>
     <p class="login-sub" id="loginSub">เข้าสู่ระบบก่อนใช้งาน</p>
     <div class="field"><label for="loginUser">ชื่อผู้ใช้</label>
       <input id="loginUser" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
@@ -407,7 +411,7 @@
 <div class="app">
   <div class="topbar">
     <div class="brand">
-      <h1 id="brandName">บิลค่าเช่าตลาด</h1>
+      <h1 id="brandName">Market Bill</h1>
       <span class="badge">A5 พร้อมปริ้น</span>
       <button class="sync-chip off" id="syncChip" data-goto="settings" title="">ยังไม่ซิงค์</button>
     </div>
@@ -596,7 +600,7 @@
       <input type="file" id="importFile" accept="application/json" hidden>
       <p class="hint">ยังไม่ได้ซิงค์ = ข้อมูลเก็บในเครื่องนี้เท่านั้น — สำรองไฟล์ไว้ก่อนเปลี่ยนเครื่อง</p>
     </div>
-    <p class="mini" style="text-align:center;margin:18px 0">บิลค่าเช่าตลาด · v2</p>
+    <p class="mini" style="text-align:center;margin:18px 0">Market Bill · v2</p>
   </section>
 </div>
 
@@ -801,6 +805,7 @@ function attachListeners(interactive){
 
   core.onSnapshot(function(snap){
     if(!snap.exists) return;
+    if(sync._coreT) return;   // local edit still queued — don't overwrite it
     var d = snap.data() || {};
     sync.applying = true;
     if(d.settings){
@@ -822,6 +827,10 @@ function attachListeners(interactive){
     sync.applying = true;
     qs.docChanges().forEach(function(ch){
       var mk = ch.doc.id;
+      var pending = Object.keys(sync._billT).some(function(k){
+        return k.indexOf(mk+"|")===0 && sync._billT[k];
+      });
+      if(pending) return;   // our edit for this month is queued — apply ours, not this
       if(ch.type === "removed"){ delete state.bills[mk]; }
       else { state.bills[mk] = ch.doc.data() || {}; }
     });
@@ -843,9 +852,23 @@ sync.pushCore = function(force){
       settings: st, template: state.template, auth: state.auth,
       tenants: state.tenants, noAutoSeed: !!state.noAutoSeed,
       _updated: Date.now()
-    }, {merge:true}).catch(function(e){ setSyncStatus("error", String(e.message||e)); });
-  }, force ? 0 : 700);
+    }, {merge:true})
+    .then(function(){ sync._coreT = null; })
+    .catch(function(e){ sync._coreT = null; setSyncStatus("error", String(e.message||e)); });
+  }, force ? 0 : 400);
 };
+function flushSyncNow(){
+  if(!sync.roomRef) return;
+  if(sync._coreT){ sync.pushCore(true); }
+  Object.keys(sync._billT).forEach(function(k){
+    if(sync._billT[k]){
+      var parts = k.split("|");
+      sync.pushBill(parts[0], parts[1]==="*" ? null : parts[1], true);
+    }
+  });
+}
+window.addEventListener("visibilitychange", function(){ if(document.hidden) flushSyncNow(); });
+window.addEventListener("pagehide", flushSyncNow);
 function reportSyncErr(e){ setSyncStatus("error", String((e && e.message) || e)); }
 sync.pushBill = function(mk, tid, force){
   if(!sync.roomRef || !mk) return;
@@ -1475,6 +1498,7 @@ function summaryCsv(){
   toast("บันทึก CSV แล้ว");
 }
 function openReport(){
+  _printPeriod = sumScope==="month" ? periodFromKey(sumMonth) : currentPeriod();
   var host = $("#sheets");
   host.innerHTML = "";
   var el = document.createElement("div");
@@ -1673,9 +1697,21 @@ function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
 /* ================= PRINT ================= */
+var _printPeriod = null;
+function nowStamp(){
+  var d = new Date(), z = function(n){ return String(n).padStart(2,"0"); };
+  return "" + d.getFullYear() + z(d.getMonth()+1) + z(d.getDate()) +
+         z(d.getHours()) + z(d.getMinutes()) + z(d.getSeconds());
+}
+function billFileName(){
+  var p = _printPeriod || currentPeriod();
+  // MarketBill_{ปี พ.ศ. ที่แสดงบนบิล}{เดือนตามรอบบิล}_{YYYYMMDDHHMMSS ตอนเซฟ}
+  return "MarketBill_" + p.y + String(p.m).padStart(2,"0") + "_" + nowStamp();
+}
 function openPrint(tenants, period){
   var list = (tenants && tenants.length)? tenants : state.tenants;
   if(!list.length){ toast("ไม่มีข้อมูลให้พิมพ์"); return; }
+  _printPeriod = period || currentPeriod();
   var host = $("#sheets");
   host.innerHTML = "";
   list.forEach(function(t){ host.appendChild(sheetEl(computeBill(t, period))); });
@@ -1731,8 +1767,10 @@ function sheetEl(bill){
       '<th style="width:14mm">'+escapeHtml(T("colRate"))+'</th><th style="width:20mm">'+escapeHtml(T("colAmt"))+'</th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="s-total"><span>'+escapeHtml(T("totalLabel"))+'</span><span class="amt">'+fmt(bill.total)+' บาท</span></div>'+
-    (notes? '<div class="s-note"><b>หมายเหตุ</b><br>'+notes+'</div>' : '<div class="s-note"></div>')+
-    (tp.showSign? '<div class="s-sign"><div>'+escapeHtml(T("signLeft"))+'</div><div>'+escapeHtml(T("signRight"))+'</div></div>' : '');
+    '<div class="s-footer">'+
+      (notes ? '<div class="s-note"><b>หมายเหตุ</b><br>'+notes+'</div>' : '') +
+      (tp.showSign ? '<div class="s-sign"><div>'+escapeHtml(T("signLeft"))+'</div><div>'+escapeHtml(T("signRight"))+'</div></div>' : '') +
+    '</div>';
   return el;
 }
 function formatThaiDate(iso){
@@ -1752,7 +1790,6 @@ function bindSettings(){
     el.oninput = function(){
       s[k] = (el.type==="number") ? (el.value===""?0:+el.value) : el.value;
       save();
-      if(k==="marketName") $("#brandName").textContent = s.marketName || "บิลค่าเช่าตลาด";
       if(k==="elecRate"||k==="waterRate") renderTenantList();
     };
   });
@@ -2007,7 +2044,6 @@ function renderAll(){
   if($("#panel-meter").classList.contains("active")) renderMeter();
   if($("#panel-template").classList.contains("active")) renderTemplate();
   if($("#panel-summary").classList.contains("active")) renderSummary();
-  $("#brandName").textContent = state.settings.marketName && state.settings.marketName.indexOf("ใส่ชื่อ")<0 ? state.settings.marketName : "บิลค่าเช่าตลาด";
 }
 
 function boot(){
@@ -2042,7 +2078,15 @@ function boot(){
     seed();
   };
   $("#printAllBtn").onclick = function(){ openPrint(null); };
-  $("#doPrint").onclick = function(){ window.print(); };
+  $("#doPrint").onclick = function(){
+    var orig = document.title;
+    document.title = document.body.classList.contains("report-mode")
+      ? ("MarketBillSummary_" + (_printPeriod||currentPeriod()).y + String((_printPeriod||currentPeriod()).m).padStart(2,"0") + "_" + nowStamp())
+      : billFileName();
+    window.print();
+    setTimeout(function(){ document.title = orig; }, 1500);
+  };
+  window.addEventListener("afterprint", function(){ document.title = "Market Bill"; });
   $("#closePrint").onclick = closePrint;
 
   $("#meterKind").onchange = renderMeter;
