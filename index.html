@@ -98,20 +98,20 @@
   .sync-chip.connecting{color:var(--warn)}
   .sync-chip.error{color:var(--danger);background:var(--danger-soft);border-color:var(--danger-soft)}
   .sync-chip::before{content:"● ";}
-  .tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:12px;border:1px solid var(--line);
-    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .tabs::-webkit-scrollbar{display:none}
+  .tabs{display:flex;gap:3px;background:var(--surface-2);padding:4px;border-radius:14px;border:1px solid var(--line)}
   .tabs button{
-    flex:0 0 auto;border:0;background:transparent;color:var(--muted);
-    padding:7px 11px;border-radius:9px;font-weight:600;font-size:.74rem;white-space:nowrap;
-    display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.1;
+    flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--muted);
+    padding:8px 1px 7px;border-radius:10px;font-weight:600;font-size:.66rem;letter-spacing:-.3px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.4;
     transition:background .15s,color .15s;
   }
+  .tabs button span{white-space:nowrap}
   .tabs button svg{
-    width:19px;height:19px;display:block;fill:none;stroke:currentColor;
-    stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+    width:22px;height:22px;display:block;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
   }
   .tabs button[aria-selected="true"]{background:var(--surface);color:var(--accent-ink);box-shadow:var(--shadow)}
+  @media (min-width:440px){ .tabs button{font-size:.82rem;padding:10px 4px 9px} .tabs button svg{width:26px;height:26px} }
 
   .panel{display:none;animation:fade .2s ease}
   .panel.active{display:block}
@@ -449,7 +449,7 @@
       <button role="tab" aria-selected="true" data-tab="bill">
         <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8h5M9.5 12h5M9.5 16h3"/></svg><span>ออกบิล</span></button>
       <button role="tab" aria-selected="false" data-tab="meter">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 12l4.2-3.2"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg><span>ค่าน้ำ–ไฟ</span></button>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 12l4.2-3.2"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg><span>น้ำ/ไฟ</span></button>
       <button role="tab" aria-selected="false" data-tab="tenants">
         <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.3 20c0-3 2.5-5.4 5.7-5.4S14.7 17 14.7 20"/><path d="M16.2 5.3a3.2 3.2 0 0 1 0 6.2"/><path d="M20.7 20c0-2.3-1.4-4.3-3.5-5.1"/></svg><span>ผู้เช่า</span></button>
       <button role="tab" aria-selected="false" data-tab="template">
@@ -663,7 +663,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.1.1";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.1.2";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-07";
 var $ = function(s,el){return (el||document).querySelector(s);};
 var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));};
