@@ -346,7 +346,7 @@
   /* ---------- Print overlay & A5 sheet ---------- */
   #printRoot{display:none}
   body.printing{overflow:hidden}
-  body.printing .app,body.printing .actionbar{display:none}
+  body.printing .app,body.printing .actionbar{display:none!important}  /* !important beats the inline style JS sets on #actionbar */
   body.printing #printRoot{
     display:block;position:fixed;inset:0;z-index:100;overflow:auto;
     background:#57544c;padding:18px 0 60px;
@@ -430,8 +430,9 @@
   @media print{
     @page{size:A5 portrait;margin:0}
     @page land{size:A4 landscape;margin:8mm}
+    body.printing .app,body.printing .actionbar,body.printing .toast{display:none!important}
     body.printing #printRoot{position:static;background:#fff;padding:0}
-    .print-toolbar{display:none}
+    .print-toolbar{display:none!important}
     .sheet{box-shadow:none;margin:0;width:auto;min-height:206mm;height:206mm;
       box-sizing:border-box;padding:9mm 10mm;page-break-after:always;overflow:hidden}
     .sheet:last-child{page-break-after:auto}
@@ -716,7 +717,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.3.2";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.3.3";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-08";
 
 /* ---- theme (device-local, ไม่ซิงค์) ---- */
