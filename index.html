@@ -669,7 +669,7 @@ var DEFAULT_SETTINGS = {
     "ค้างค่าเช่าเกิน 1 เดือนขึ้นไป ขอเอาล็อกคืนโดยไม่คืนค่ามัดจำ"
   ],
   liffId:"",
-  fbConfig:"",
+  fbConfig:'{ "apiKey": "AIzaSyAWDvE9dxM65ztA2MAVDHbRRV1nJK_WaaY", "authDomain": "maket-bill.firebaseapp.com", "projectId": "maket-bill", "storageBucket": "maket-bill.firebasestorage.app", "messagingSenderId": "696633924439", "appId": "1:696633924439:web:98e5a012edf6b85ce9fc12" }',
   fbRoom:""
 };
 
@@ -682,6 +682,7 @@ function load(){
     if(raw){
       var d = JSON.parse(raw);
       state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings||{});
+      if(!state.settings.fbConfig) state.settings.fbConfig = DEFAULT_SETTINGS.fbConfig;  // keep baked-in config
       state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template||{});
       state.auth = (d.auth && Array.isArray(d.auth.users) && d.auth.users.length) ? d.auth : cloneAuth();
       state.tenants = Array.isArray(d.tenants)? d.tenants : [];
