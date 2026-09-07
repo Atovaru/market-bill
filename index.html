@@ -6,7 +6,7 @@
 <title>Market Bill</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Bai+Jamjuree:wght@400;500;600;700&family=Kanit:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&family=Mitr:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
 <style>
   :root{
     --paper:#f4f2ec;
@@ -243,8 +243,17 @@
   .user-row:last-child{border-bottom:0}
   .user-row .un{flex:1;font-weight:600}
   .user-row .role{font-size:.72rem;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);padding:1px 7px;border-radius:999px}
-  .whoami{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:.9rem}
+  .whoami{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:.9rem;flex-wrap:wrap}
   .whoami b{font-weight:700}
+  .user-card{border:1px solid var(--line);border-radius:11px;padding:10px;margin-top:10px;background:var(--surface-2)}
+  .user-card .user-row{border:0;padding:0;flex-wrap:wrap;gap:6px}
+  .role-sel{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:.82rem}
+  .perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:9px}
+  .perm-grid label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--ink)}
+  .perm-grid input{width:auto}
+  .size-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:6px}
+  .size-grid .field{margin:0}
+  .size-grid .field label{font-size:.78rem}
 
   /* ---------- Flat billing rows (no click-to-open) ---------- */
   .brow{
@@ -331,35 +340,38 @@
 
   .sheet{
     position:relative;
+    --fs-title:16pt; --fs-market:10pt; --fs-meta:10pt; --fs-table:10pt;
+    --fs-total:12.5pt; --fs-note:8.6pt; --fs-sign:9pt;
     width:148mm;min-height:210mm;background:#fff;color:#111;
     margin:0 auto 16px;padding:11mm 12mm;
+    font-family:"Bai Jamjuree","Sarabun",sans-serif;
     font-size:11.2pt;line-height:1.32;
     box-shadow:0 4px 18px rgba(0,0,0,.4);
     display:flex;flex-direction:column;
   }
   .sheet *{color:#111!important}
   .s-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:6px}
-  .s-top .title{font-size:16pt;font-weight:700}
-  .s-top .market{font-size:10pt;color:#333!important}
-  .s-top .period{text-align:right;font-size:10.5pt}
-  .s-meta{display:flex;justify-content:space-between;gap:10px;margin:8px 0 6px;font-size:10pt}
+  .s-top .title{font-size:var(--fs-title);font-weight:700}
+  .s-top .market{font-size:var(--fs-market);color:#333!important}
+  .s-top .period{text-align:right;font-size:calc(var(--fs-meta) + 0.5pt)}
+  .s-meta{display:flex;justify-content:space-between;gap:10px;margin:8px 0 6px;font-size:var(--fs-meta)}
   .s-meta .box{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .s-meta .box.wide{flex:1.7 1 0;overflow:visible}
-  .s-meta .invno{font-size:8.6pt;letter-spacing:-.2px}
-  .s-meta .lbl{color:#555!important;font-size:9pt}
+  .s-meta .invno{font-size:calc(var(--fs-meta) - 1.4pt);letter-spacing:-.2px}
+  .s-meta .lbl{color:#555!important;font-size:calc(var(--fs-meta) - 1pt)}
   table.s-tb{width:100%;border-collapse:collapse;margin-top:2px}
-  table.s-tb th,table.s-tb td{border:1px solid #333;padding:3px 5px;font-size:10pt}
+  table.s-tb th,table.s-tb td{border:1px solid #333;padding:3px 5px;font-size:var(--fs-table)}
   table.s-tb th{background:#eee;font-weight:700;text-align:center}
   table.s-tb td.n{text-align:right;font-variant-numeric:tabular-nums}
   table.s-tb td.c{text-align:center}
-  .s-total{display:flex;justify-content:flex-end;gap:16px;margin-top:6px;font-size:12.5pt;font-weight:700}
+  .s-total{display:flex;justify-content:flex-end;gap:16px;margin-top:6px;font-size:var(--fs-total);font-weight:700}
   .s-total .amt{min-width:34mm;text-align:right}
   table.s-tb td.pad{height:7.2mm}
   /* footer (หมายเหตุ + ลงชื่อ) — pinned to the same spot at the bottom of every bill */
   .s-footer{position:absolute;left:0;right:0;bottom:0;padding:0 12mm 11mm}
-  .s-note{padding-top:8px;font-size:8.6pt;line-height:1.4;color:#222!important;border-top:1px solid #999}
+  .s-note{padding-top:8px;font-size:var(--fs-note);line-height:1.4;color:#222!important;border-top:1px solid #999}
   .s-note b{font-weight:700}
-  .s-sign{display:flex;justify-content:space-between;margin-top:14mm;font-size:9pt;gap:20px}
+  .s-sign{display:flex;justify-content:space-between;margin-top:14mm;font-size:var(--fs-sign);gap:20px}
   .s-sign div{flex:1;text-align:center;border-top:1px dotted #555;padding-top:3px;color:#555!important}
 
   /* summary report sheet (landscape) */
@@ -488,7 +500,7 @@
 
   <!-- ============ เทมเพลตบิล ============ -->
   <section class="panel" id="panel-template">
-    <p class="hint">แก้ข้อความ/ป้ายกำกับบนใบบิล ตัวอย่างด้านล่างจะอัปเดตทันที · ขนาดกระดาษ A5 คงที่</p>
+    <p class="hint">แก้ข้อความ/ฟอนต์/ขนาดตัวอักษรบนใบบิล ตัวอย่างด้านล่างอัปเดตทันที · ขนาดกระดาษ A5 คงที่</p>
     <div id="tplForm"></div>
     <div class="btn-row" style="margin:12px 0">
       <button class="btn danger sm" id="tplReset">คืนค่าเริ่มต้น</button>
@@ -558,12 +570,7 @@
       </div>
     </div>
 
-    <div class="section-title">หมายเหตุท้ายบิล</div>
-    <div class="card card-pad">
-      <div class="field"><textarea id="set-notes" rows="6"></textarea></div>
-      <p class="hint">พิมพ์บรรทัดละ 1 ข้อ — จะขึ้นเลข 1. 2. 3. ให้อัตโนมัติ</p>
-    </div>
-
+    <div class="admin-only">
     <div class="section-title">ซิงค์ข้อมูลข้ามเครื่อง (ใช้ร่วมกันในครอบครัว)</div>
     <div class="card card-pad">
       <p class="hint" style="margin-top:2px">
@@ -600,6 +607,7 @@
       <input type="file" id="importFile" accept="application/json" hidden>
       <p class="hint">ยังไม่ได้ซิงค์ = ข้อมูลเก็บในเครื่องนี้เท่านั้น — สำรองไฟล์ไว้ก่อนเปลี่ยนเครื่อง</p>
     </div>
+    </div><!-- /.admin-only -->
     <p class="mini" style="text-align:center;margin:18px 0">Market Bill · v2</p>
   </section>
 </div>
@@ -648,8 +656,16 @@ var DEFAULT_TEMPLATE = {
   itemElec:"ค่าไฟ", itemElecMulti:"ค่าไฟ {lock}",
   itemWater:"ค่าน้ำ", itemWaterMulti:"ค่าน้ำ {lock}",
   itemCarry:"ค้างจ่าย", itemPenalty:"ค่าปรับ",
-  totalLabel:"รวมเงินทั้งสิ้น", signLeft:"ผู้รับเงิน", signRight:"ผู้ชำระเงิน"
+  totalLabel:"รวมเงินทั้งสิ้น", signLeft:"ผู้รับเงิน", signRight:"ผู้ชำระเงิน",
+  font:"Bai Jamjuree",
+  notes:[
+    'กรุณาโอนเงินเข้าบัญชี ธ.กรุงเทพ "ปทุม เชื้อวู้หลิม" เลขบัญชี "1284130802" และแนบสลิปโอนเงินแจ้งทางไลน์',
+    "ค่าเช่าชำระไม่เกินวันที่ 10 ของเดือน เกินกำหนดปรับวันละ 50 บาท",
+    "ค้างค่าเช่าเกิน 1 เดือนขึ้นไป ขอเอาล็อกคืนโดยไม่คืนค่ามัดจำ"
+  ],
+  fsTitle:16, fsMarket:10, fsMeta:10, fsTable:10, fsTotal:12.5, fsNote:8.6, fsSign:9
 };
+var TPL_FONTS = ["Bai Jamjuree","Sarabun","Kanit","Prompt","Mitr","Noto Sans Thai"];
 
 /* SHA-256("tigger411") */
 var DEFAULT_AUTH = { users: [
@@ -667,11 +683,6 @@ var DEFAULT_SETTINGS = {
   waterRate:20,
   dueDay:10,
   penaltyPerDay:50,
-  notes:[
-    'กรุณาโอนเงินเข้าบัญชี ธ.กรุงเทพ "ปทุม เชื้อวู้หลิม" เลขบัญชี "1284130802" และแนบสลิปโอนเงินแจ้งทางไลน์',
-    "ค่าเช่าชำระไม่เกินวันที่ 10 ของเดือน เกินกำหนดปรับวันละ 50 บาท",
-    "ค้างค่าเช่าเกิน 1 เดือนขึ้นไป ขอเอาล็อกคืนโดยไม่คืนค่ามัดจำ"
-  ],
   liffId:"",
   fbConfig:'{ "apiKey": "AIzaSyAWDvE9dxM65ztA2MAVDHbRRV1nJK_WaaY", "authDomain": "maket-bill.firebaseapp.com", "projectId": "maket-bill", "storageBucket": "maket-bill.firebasestorage.app", "messagingSenderId": "696633924439", "appId": "1:696633924439:web:98e5a012edf6b85ce9fc12" }',
   fbRoom:""
@@ -688,6 +699,9 @@ function load(){
       state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings||{});
       if(!state.settings.fbConfig) state.settings.fbConfig = DEFAULT_SETTINGS.fbConfig;  // keep baked-in config
       state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template||{});
+      // migrate: หมายเหตุ moved from settings -> template
+      if(d.settings && Array.isArray(d.settings.notes) && !(d.template && d.template.notes))
+        state.template.notes = d.settings.notes;
       state.auth = (d.auth && Array.isArray(d.auth.users) && d.auth.users.length) ? d.auth : cloneAuth();
       state.tenants = Array.isArray(d.tenants)? d.tenants : [];
       state.bills = d.bills && typeof d.bills==="object" ? d.bills : {};
@@ -930,9 +944,34 @@ function findUser(u){
   u = String(u||"").trim().toLowerCase();
   return authUsers().filter(function(x){ return x.u.toLowerCase()===u; })[0] || null;
 }
-function isAdmin(){ return !!(session && session.role==="admin"); }
+var TABKEYS = [
+  ["bill","ออกบิล"],["meter","ค่าน้ำ–ไฟ"],["tenants","ผู้เช่า"],
+  ["template","เทมเพลตบิล"],["summary","สรุป/ย้อนหลัง"],["settings","ตั้งค่า"]
+];
+function myRec(){ return session ? findUser(session.u) : null; }
+function isAdmin(){ var r = myRec(); return !!(r && r.role==="admin"); }
 function isAuthed(){ return !!(session && findUser(session.u)); }
 function adminCount(){ return authUsers().filter(function(x){return x.role==="admin";}).length; }
+/* can this viewer use tab `k`?  admin=yes always; others: perms[k] !== false */
+function can(k){
+  var r = myRec();
+  if(!r) return false;
+  if(r.role==="admin") return true;
+  return !(r.perms && r.perms[k]===false);
+}
+/* hide tabs / admin-only settings sections the current user can't touch */
+function applyPerms(){
+  var admin = isAdmin();
+  $$(".tabs button").forEach(function(b){ b.hidden = !can(b.dataset.tab); });
+  $$(".admin-only").forEach(function(el){ el.hidden = !admin; });
+  // if current tab is now forbidden, jump to the first allowed one
+  var active = ($$(".panel.active")[0]||{}).id || "";
+  active = active.replace("panel-","");
+  if(active && !can(active)){
+    var first = TABKEYS.map(function(x){return x[0];}).filter(can)[0];
+    if(first) switchTab(first);
+  }
+}
 
 function loadSession(){
   try{
@@ -956,12 +995,15 @@ function loginErr(msg){
   var e = $("#loginErr"); e.textContent = msg; e.hidden = false;
 }
 function finishLogin(rec){
-  session = { u: rec.u, role: rec.role || "user", ts: Date.now() };
+  session = { u: rec.u, role: rec.role==="admin" ? "admin" : "editor", ts: Date.now() };
   var store = $("#loginRemember").checked ? localStorage : sessionStorage;
   try{ store.setItem(SKEY, JSON.stringify(session)); }catch(e){}
   $("#loginPass").value = "";
   hideGate();
+  applyPerms();
   renderAll();
+  var first = TABKEYS.map(function(x){return x[0];}).filter(can)[0] || "bill";
+  switchTab(first);
 }
 function doLogin(retry){
   var u = $("#loginUser").value.trim(), p = $("#loginPass").value.trim();
@@ -991,53 +1033,97 @@ function logout(){
   showGate();
 }
 
+function roleLabel(r){ return r==="admin" ? "admin" : "editor"; }
 function renderUsers(){
   var host = $("#userMgmt");
   if(!host) return;
   host.innerHTML = "";
+
   var who = document.createElement("div");
   who.className = "whoami";
-  who.innerHTML = 'เข้าใช้งานเป็น <b>'+escapeHtml(session ? session.u : "-")+'</b>'+
-    (isAdmin() ? ' <span class="user-row"><span class="role">admin</span></span>' : '');
+  who.innerHTML = 'เข้าใช้งานเป็น <b>'+escapeHtml(session ? session.u : "-")+'</b> '+
+    '<span class="role">'+roleLabel(myRec() && myRec().role)+'</span>';
   var lo = document.createElement("button");
   lo.className = "btn sm"; lo.textContent = "ออกจากระบบ";
-  lo.style.marginLeft = "auto";
-  lo.onclick = logout;
+  lo.style.marginLeft = "auto"; lo.onclick = logout;
   who.appendChild(lo);
   host.appendChild(who);
 
-  // change my own password
   var meBtn = document.createElement("button");
   meBtn.className = "btn sm"; meBtn.textContent = "เปลี่ยนรหัสผ่านของฉัน";
+  meBtn.style.marginBottom = "4px";
   meBtn.onclick = function(){ changePw(session.u); };
   host.appendChild(meBtn);
 
   if(!isAdmin()){
     var note = document.createElement("p");
     note.className = "hint"; note.style.margin = "10px 2px 0";
-    note.textContent = "ต้องเป็น admin ถึงจะเพิ่ม/ลบผู้ใช้ หรือแก้รหัสผ่านคนอื่นได้";
+    note.textContent = "ต้องเป็น admin ถึงจะเพิ่ม/ลบผู้ใช้ หรือกำหนดสิทธิ์เข้าถึงแต่ละแท็บ";
     host.appendChild(note);
     return;
   }
 
-  var list = document.createElement("div");
-  list.style.marginTop = "12px";
   authUsers().forEach(function(x){
-    var row = document.createElement("div");
-    row.className = "user-row";
-    row.innerHTML = '<span class="un">'+escapeHtml(x.u)+'</span><span class="role">'+escapeHtml(x.role||"user")+'</span>';
+    var isSelf = x.u.toLowerCase() === (session.u||"").toLowerCase();
+    var box = document.createElement("div");
+    box.className = "user-card";
+
+    var head = document.createElement("div");
+    head.className = "user-row";
+    head.innerHTML = '<span class="un">'+escapeHtml(x.u)+'</span>';
+    // role select
+    var rs = document.createElement("select");
+    rs.className = "role-sel";
+    [["admin","admin (จัดการทุกอย่าง)"],["editor","editor (กำหนดสิทธิ์ได้)"]].forEach(function(o){
+      var op = document.createElement("option"); op.value=o[0]; op.textContent=o[1]; rs.appendChild(op);
+    });
+    rs.value = x.role==="admin" ? "admin" : "editor";
+    rs.disabled = isSelf && adminCount()<=1;
+    rs.onchange = function(){
+      if(rs.value!=="admin" && x.role==="admin" && adminCount()<=1){ toast("ต้องมี admin อย่างน้อย 1 คน"); rs.value="admin"; return; }
+      x.role = rs.value; save(); renderUsers();
+      if(isSelf){ session.role = x.role; try{ (localStorage.getItem(SKEY)?localStorage:sessionStorage).setItem(SKEY, JSON.stringify(session)); }catch(e){} applyPerms(); }
+    };
+    head.appendChild(rs);
+
     var chg = document.createElement("button");
     chg.className = "btn sm"; chg.textContent = "รหัสผ่าน";
     chg.onclick = function(){ changePw(x.u); };
-    row.appendChild(chg);
+    head.appendChild(chg);
     var del = document.createElement("button");
     del.className = "btn sm danger"; del.textContent = "ลบ";
+    del.disabled = isSelf;
     del.onclick = function(){ delUser(x.u); };
-    if(x.u.toLowerCase() === (session.u||"").toLowerCase()) del.disabled = true;
-    row.appendChild(del);
-    list.appendChild(row);
+    head.appendChild(del);
+    box.appendChild(head);
+
+    // per-tab access (editors only)
+    if(x.role !== "admin"){
+      if(!x.perms) x.perms = {};
+      var pw = document.createElement("div");
+      pw.className = "perm-grid";
+      TABKEYS.forEach(function(tk){
+        var lab = document.createElement("label");
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = x.perms[tk[0]] !== false;
+        cb.onchange = function(){
+          x.perms[tk[0]] = cb.checked;
+          save();
+          if(isSelf) applyPerms();
+        };
+        lab.appendChild(cb);
+        lab.appendChild(document.createTextNode(" "+tk[1]));
+        pw.appendChild(lab);
+      });
+      box.appendChild(pw);
+      var h2 = document.createElement("p");
+      h2.className = "hint"; h2.style.margin = "2px 2px 0";
+      h2.textContent = "ติ๊ก = เข้าแท็บนั้นได้ · แท็บ “ตั้งค่า” ของ editor จะเห็นเฉพาะหัวบิล+เรต (ส่วนผู้ใช้/ซิงค์/LIFF/ข้อมูล เฉพาะ admin)";
+      box.appendChild(h2);
+    }
+    host.appendChild(box);
   });
-  host.appendChild(list);
 
   var add = document.createElement("button");
   add.className = "btn sm primary"; add.textContent = "+ เพิ่มผู้ใช้";
@@ -1074,9 +1160,9 @@ function addUser(){
   if(p == null) return;
   p = p.trim();
   if(p.length < 4){ toast("รหัสผ่านสั้นไป"); return; }
-  var role = confirm("ให้ \""+u+"\" เป็น admin (จัดการผู้ใช้ได้) ?\nกด OK = admin, Cancel = ผู้ใช้ทั่วไป") ? "admin" : "user";
+  var role = confirm("ให้ \""+u+"\" เป็น admin ?\nOK = admin (จัดการทุกอย่าง)   Cancel = editor (กำหนดสิทธิ์ทีหลังได้)") ? "admin" : "editor";
   sha256(p).then(function(h){
-    state.auth.users.push({ u:u, h:h, role:role });
+    state.auth.users.push({ u:u, h:h, role:role, perms:{} });
     save(); renderUsers();
     toast("เพิ่มผู้ใช้ "+u+" แล้ว");
   });
@@ -1705,8 +1791,8 @@ function nowStamp(){
 }
 function billFileName(){
   var p = _printPeriod || currentPeriod();
-  // MarketBill_{ปี พ.ศ. ที่แสดงบนบิล}{เดือนตามรอบบิล}_{YYYYMMDDHHMMSS ตอนเซฟ}
-  return "MarketBill_" + p.y + String(p.m).padStart(2,"0") + "_" + nowStamp();
+  // MarketBill_{ปี ค.ศ.}{เดือนตามรอบบิล}_{YYYYMMDDHHMMSS ตอนเซฟ}
+  return "MarketBill_" + beToAd(p.y) + String(p.m).padStart(2,"0") + "_" + nowStamp();
 }
 function openPrint(tenants, period){
   var list = (tenants && tenants.length)? tenants : state.tenants;
@@ -1725,6 +1811,10 @@ function sheetEl(bill){
   var t = bill.tenant;
   var el = document.createElement("div");
   el.className = "sheet";
+  el.style.fontFamily = '"' + (T("font")||"Bai Jamjuree") + '","Sarabun",sans-serif';
+  [["fsTitle","--fs-title"],["fsMarket","--fs-market"],["fsMeta","--fs-meta"],
+   ["fsTable","--fs-table"],["fsTotal","--fs-total"],["fsNote","--fs-note"],["fsSign","--fs-sign"]]
+   .forEach(function(p){ var v = +T(p[0]); if(v) el.style.setProperty(p[1], v+"pt"); });
 
   var rows = bill.lines.map(function(l){
     var metered = (l.use!=null && l.rate!=null && (l.prev!=null || l.curr!=null || l.use>0));
@@ -1744,7 +1834,7 @@ function sheetEl(bill){
     rows += '<tr><td class="c pad">&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
   }
 
-  var notes = (s.notes||[]).filter(function(x){return x && x.trim();})
+  var notes = (T("notes")||[]).filter(function(x){return x && x.trim();})
     .map(function(x,i){ return (i+1)+". "+escapeHtml(x); }).join("<br>");
 
   var dateStr = bill.date ? formatThaiDate(bill.date) : (bill.period.y+"");
@@ -1793,10 +1883,6 @@ function bindSettings(){
       if(k==="elecRate"||k==="waterRate") renderTenantList();
     };
   });
-  var nt = $("#set-notes");
-  nt.value = (s.notes||[]).join("\n");
-  nt.oninput = function(){ s.notes = nt.value.split("\n"); save(); };
-
   var fc = $("#set-fbConfig"), fr = $("#set-fbRoom");
   if(fc){ fc.value = s.fbConfig||""; fc.oninput = function(){ s.fbConfig = fc.value; try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }; }
   if(fr){ fr.value = s.fbRoom||"";   fr.oninput = function(){ s.fbRoom = fr.value; try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }; }
@@ -1958,7 +2044,7 @@ var TPL_FIELDS = [
     ["labelTenant","ป้าย: ชื่อผู้เช่า"],["labelLock","ป้าย: ล็อก/แผง"],
     ["labelInvNo","ป้าย: เลขที่"],["labelDate","ป้าย: วันที่"]
   ]],
-  ["หัวตาราง", [
+  ["หัวตาราง (ชื่อคอลัมน์ในตาราง)", [
     ["colNo","คอลัมน์ 'ที่'"],["colItem","คอลัมน์ 'รายการ'"],["colPrev","คอลัมน์ 'เลขครั้งก่อน'"],
     ["colCurr","คอลัมน์ 'เลขครั้งนี้'"],["colUse","คอลัมน์ 'หน่วย'"],["colRate","คอลัมน์ 'ราคา/หน่วย'"],
     ["colAmt","คอลัมน์ 'จำนวนเงิน'"]
@@ -1971,11 +2057,34 @@ var TPL_FIELDS = [
   ]],
   ["ท้ายบิล", [ ["signLeft","ช่องลงชื่อ (ซ้าย)"],["signRight","ช่องลงชื่อ (ขวา)"] ]]
 ];
+var TPL_SIZES = [
+  ["fsTitle","ขนาด: หัวบิล"],["fsMarket","ขนาด: ชื่อตลาด"],["fsMeta","ขนาด: ข้อมูลผู้เช่า/เลขที่/วันที่"],
+  ["fsTable","ขนาด: ตัวอักษรในตาราง"],["fsTotal","ขนาด: บรรทัดยอดรวม"],
+  ["fsNote","ขนาด: หมายเหตุ"],["fsSign","ขนาด: ช่องลงชื่อ"]
+];
 function renderTemplate(){
   var host = $("#tplForm"); host.innerHTML = "";
+
+  // ---- แบบอักษร & ขนาด ----
+  host.appendChild(secTitle("แบบอักษร & ขนาดตัวอักษร (บนใบบิล)"));
+  var fcard = document.createElement("div"); fcard.className = "card card-pad";
+  fcard.appendChild(selectEl("แบบอักษร (ฟอนต์)", T("font")||"Bai Jamjuree",
+    TPL_FONTS.map(function(f){ return [f,f]; }),
+    function(v){ state.template.font = v; save(); tplPreview(); }));
+  var grid = document.createElement("div"); grid.className = "size-grid";
+  TPL_SIZES.forEach(function(sz){
+    var f = fieldEl(sz[1] + " (pt)", T(sz[0]), function(v){
+      state.template[sz[0]] = v===""? DEFAULT_TEMPLATE[sz[0]] : +v; save(); tplPreview();
+    }, "number");
+    f.querySelector("input").step = "0.5";
+    grid.appendChild(f);
+  });
+  fcard.appendChild(grid);
+  host.appendChild(fcard);
+
+  // ---- ข้อความ / ป้าย / ตาราง ----
   TPL_FIELDS.forEach(function(grp){
-    var st = document.createElement("div"); st.className = "section-title"; st.textContent = grp[0];
-    host.appendChild(st);
+    host.appendChild(secTitle(grp[0]));
     var card = document.createElement("div"); card.className = "card card-pad";
     grp[1].forEach(function(f){
       if(f[2]==="bool"){
@@ -1990,8 +2099,21 @@ function renderTemplate(){
     });
     host.appendChild(card);
   });
+
+  // ---- หมายเหตุท้ายบิล ----
+  host.appendChild(secTitle("หมายเหตุท้ายบิล"));
+  var ncard = document.createElement("div"); ncard.className = "card card-pad";
+  var nf = document.createElement("div"); nf.className = "field";
+  var nta = document.createElement("textarea"); nta.rows = 6;
+  nta.value = (T("notes")||[]).join("\n");
+  nta.oninput = function(){ state.template.notes = nta.value.split("\n"); save(); tplPreview(); };
+  nf.appendChild(nta); ncard.appendChild(nf);
+  ncard.appendChild(pHint("พิมพ์บรรทัดละ 1 ข้อ — ขึ้นเลข 1. 2. 3. ให้อัตโนมัติ · ตรึงท้ายทุกบิล"));
+  host.appendChild(ncard);
+
   tplPreview();
 }
+function secTitle(txt){ var d=document.createElement("div"); d.className="section-title"; d.textContent=txt; return d; }
 function tplPreview(){
   var box = $("#tplPreview"); if(!box) return;
   box.innerHTML = "";
@@ -2013,6 +2135,10 @@ function tplPreview(){
 
 /* ================= tabs & init ================= */
 function switchTab(name){
+  if(session && !can(name)){
+    toast("ไม่มีสิทธิ์เข้าถึงแท็บนี้");
+    name = TABKEYS.map(function(x){return x[0];}).filter(can)[0] || name;
+  }
   $$(".tabs button").forEach(function(b){ b.setAttribute("aria-selected", b.dataset.tab===name); });
   $$(".panel").forEach(function(p){ p.classList.toggle("active", p.id==="panel-"+name); });
   $("#actionbar").style.display = (name==="bill" && state.tenants.length)? "block":"none";
@@ -2041,6 +2167,7 @@ function renderAll(){
   renderTenantManage();
   renderEditor();
   renderUsers();
+  applyPerms();
   if($("#panel-meter").classList.contains("active")) renderMeter();
   if($("#panel-template").classList.contains("active")) renderTemplate();
   if($("#panel-summary").classList.contains("active")) renderSummary();
@@ -2081,7 +2208,7 @@ function boot(){
   $("#doPrint").onclick = function(){
     var orig = document.title;
     document.title = document.body.classList.contains("report-mode")
-      ? ("MarketBillSummary_" + (_printPeriod||currentPeriod()).y + String((_printPeriod||currentPeriod()).m).padStart(2,"0") + "_" + nowStamp())
+      ? ("MarketBillSummary_" + beToAd((_printPeriod||currentPeriod()).y) + String((_printPeriod||currentPeriod()).m).padStart(2,"0") + "_" + nowStamp())
       : billFileName();
     window.print();
     setTimeout(function(){ document.title = orig; }, 1500);
