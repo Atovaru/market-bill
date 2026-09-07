@@ -648,30 +648,30 @@
     </div>
 
     <div class="admin-only">
-    <div class="section-title">ซิงค์ข้อมูลข้ามเครื่อง (ใช้ร่วมกันในครอบครัว)</div>
+    <div class="section-title">ซิงค์ข้อมูลข้ามเครื่อง</div>
     <div class="card card-pad">
       <p class="hint" style="margin-top:2px">
-        ทำครั้งเดียว: สร้างโปรเจกต์ Firebase ฟรี → เปิด Firestore + Anonymous sign-in → คัดลอกก้อน
-        <code>firebaseConfig</code> มาวางด้านล่าง → ตั้ง “รหัสห้อง” ให้เหมือนกันทุกเครื่อง → กดเชื่อมต่อ
-        (วิธีละเอียดอยู่ในไฟล์ SETUP-ครอบครัว.md)
+        ตั้งค่า Firebase + รหัสห้องไว้ในแอปแล้ว — <b>ทุกเครื่องเชื่อมห้องเดียวกันอัตโนมัติ</b>
+        ตอนเปิดแอป ไม่ต้องกรอกอะไร (Editor ไม่เห็นส่วนนี้)
       </p>
+      <div class="field"><label>รหัสห้อง</label>
+        <input id="set-fbRoom" readonly autocapitalize="off" autocorrect="off"></div>
       <div class="field">
-        <label>Firebase config (วางทั้งก้อน { ... })</label>
-        <textarea id="set-fbConfig" rows="7" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "appId": "..." }' style="font-family:ui-monospace,monospace;font-size:.82rem"></textarea>
+        <label>Firebase config</label>
+        <textarea id="set-fbConfig" rows="4" readonly style="font-family:ui-monospace,monospace;font-size:.78rem"></textarea>
       </div>
-      <div class="field"><label>รหัสห้อง (ตั้งเอง เช่น talad-somsri — ทุกเครื่องต้องเหมือนกัน)</label>
-        <input id="set-fbRoom" placeholder="talad-somsri" autocapitalize="off" autocorrect="off"></div>
       <div class="btn-row">
-        <button class="btn primary" id="syncConnectBtn">เชื่อมต่อ / ซิงค์</button>
-        <button class="btn" id="syncDisconnectBtn">หยุดซิงค์</button>
+        <button class="btn" id="syncConnectBtn">เชื่อมต่อใหม่ (ถ้าหลุด)</button>
+        <button class="btn" id="syncDisconnectBtn">หยุดซิงค์ (เครื่องนี้)</button>
       </div>
       <p class="hint" id="syncDetail" style="margin-top:8px">สถานะ: ยังไม่ซิงค์</p>
+      <p class="hint" style="margin-top:4px">จะเปลี่ยนห้อง/โปรเจกต์ Firebase ต้องแก้ในไฟล์ทุกเครื่อง — แจ้งผู้ทำแอป</p>
     </div>
 
     <div class="section-title">เชื่อมต่อ LINE (LIFF)</div>
     <div class="card card-pad">
       <div class="field"><label>LIFF ID</label><input id="set-liffId" placeholder="เช่น 2000000000-abcdefgh"></div>
-      <p class="hint">ใส่เมื่อเปิดผ่านปุ่ม/เมนูใน LINE เท่านั้น — เปิดในเบราว์เซอร์ปกติไม่ต้องใส่</p>
+      <p class="hint">admin ใส่ครั้งเดียว — ซิงค์ไปทุกเครื่องอัตโนมัติ</p>
     </div>
 
     <div class="section-title">ข้อมูล</div>
@@ -716,7 +716,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.2.0";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.3.0";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-08";
 
 /* ---- theme (device-local, ไม่ซิงค์) ---- */
@@ -784,7 +784,7 @@ var DEFAULT_SETTINGS = {
   penaltyPerDay:50,
   liffId:"",
   fbConfig:'{ "apiKey": "AIzaSyAWDvE9dxM65ztA2MAVDHbRRV1nJK_WaaY", "authDomain": "maket-bill.firebaseapp.com", "projectId": "maket-bill", "storageBucket": "maket-bill.firebasestorage.app", "messagingSenderId": "696633924439", "appId": "1:696633924439:web:98e5a012edf6b85ce9fc12" }',
-  fbRoom:""
+  fbRoom:"talad-nok-2569"
 };
 
 function cloneAuth(){ return JSON.parse(JSON.stringify(DEFAULT_AUTH)); }
@@ -797,6 +797,7 @@ function load(){
       var d = JSON.parse(raw);
       state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings||{});
       if(!state.settings.fbConfig) state.settings.fbConfig = DEFAULT_SETTINGS.fbConfig;  // keep baked-in config
+      if(!state.settings.fbRoom) state.settings.fbRoom = DEFAULT_SETTINGS.fbRoom;        // keep baked-in room
       state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template||{});
       // migrate: หมายเหตุ moved from settings -> template
       if(d.settings && Array.isArray(d.settings.notes) && !(d.template && d.template.notes))
@@ -2448,9 +2449,9 @@ function boot(){
   };
 
   $("#syncConnectBtn").onclick = function(){
-    state.settings.fbConfig = $("#set-fbConfig").value;
-    state.settings.fbRoom = $("#set-fbRoom").value;
-    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    // ใช้ค่าที่ฝังในแอป (readonly) — แค่เชื่อมใหม่กรณีหลุด
+    state.settings.fbConfig = state.settings.fbConfig || DEFAULT_SETTINGS.fbConfig;
+    state.settings.fbRoom = state.settings.fbRoom || DEFAULT_SETTINGS.fbRoom;
     if(sync.db) disconnectSync();
     connectSync(true);
   };
