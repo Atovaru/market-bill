@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>บิลค่าเช่าตลาด</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --paper:#f4f2ec;
+    --surface:#ffffff;
+    --surface-2:#faf9f5;
+    --ink:#20241f;
+    --muted:#6a6f66;
+    --line:#e4e0d4;
+    --accent:#1f7a3d;
+    --accent-ink:#14532a;
+    --accent-soft:#e5efe6;
+    --danger:#b23b2a;
+    --danger-soft:#f6e5e1;
+    --warn:#8a6d1f;
+    --shadow:0 1px 2px rgba(30,32,26,.06),0 8px 24px rgba(30,32,26,.06);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#141714;
+      --surface:#1d211d;
+      --surface-2:#232823;
+      --ink:#e9e7df;
+      --muted:#9aa094;
+      --line:#333a32;
+      --accent:#4fae6f;
+      --accent-ink:#bfe6c9;
+      --accent-soft:#22301f;
+      --danger:#e08a78;
+      --danger-soft:#3a2420;
+      --warn:#d9bd6e;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#141714;
+    --surface:#1d211d;
+    --surface-2:#232823;
+    --ink:#e9e7df;
+    --muted:#9aa094;
+    --line:#333a32;
+    --accent:#4fae6f;
+    --accent-ink:#bfe6c9;
+    --accent-soft:#22301f;
+    --danger:#e08a78;
+    --danger-soft:#3a2420;
+    --warn:#d9bd6e;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Sarabun",-apple-system,"Helvetica Neue",sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:16px;
+    line-height:1.45;
+    -webkit-text-size-adjust:100%;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  h1,h2,h3{margin:0;font-weight:700;text-wrap:balance}
+  button{font-family:inherit;font-size:1rem;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:1rem;color:var(--ink)}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* ---------- App shell ---------- */
+  .app{max-width:560px;margin:0 auto;padding:0 14px 120px}
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:var(--paper);
+    padding:14px 0 8px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:16px;
+  }
+  .brand{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
+  .brand h1{font-size:1.18rem;letter-spacing:-.01em}
+  .brand .badge{
+    font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--accent-ink);background:var(--accent-soft);
+    padding:2px 8px;border-radius:999px;
+  }
+  .sync-chip{
+    margin-left:auto;align-self:center;border:1px solid var(--line);border-radius:999px;
+    font-size:.72rem;font-weight:600;padding:3px 10px;background:var(--surface-2);color:var(--muted);
+  }
+  #panel-settings code{background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.85em}
+  .sync-chip.on{color:var(--accent-ink);background:var(--accent-soft);border-color:var(--accent-soft)}
+  .sync-chip.connecting{color:var(--warn)}
+  .sync-chip.error{color:var(--danger);background:var(--danger-soft);border-color:var(--danger-soft)}
+  .sync-chip::before{content:"● ";}
+  .tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:12px;border:1px solid var(--line);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{
+    flex:0 0 auto;border:0;background:transparent;color:var(--muted);
+    padding:9px 12px;border-radius:9px;font-weight:600;font-size:.85rem;white-space:nowrap;
+    transition:background .15s,color .15s;
+  }
+  .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+
+  .panel{display:none;animation:fade .2s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:.4}to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.panel,*{animation:none!important;transition:none!important}}
+
+  /* ---------- Cards & fields ---------- */
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;
+  }
+  .card-pad{padding:14px}
+  .section-title{
+    font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin:22px 2px 10px;
+  }
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+  .field label{font-size:.82rem;font-weight:600;color:var(--muted)}
+  .field input,.field select,.field textarea{
+    width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;
+    background:var(--surface-2);outline:none;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  .field textarea{min-height:64px;resize:vertical;line-height:1.4}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .inline-check{flex-direction:row;align-items:center;gap:8px;margin-bottom:8px}
+  .inline-check input{width:auto}
+  .inline-check label{font-size:.95rem;color:var(--ink);font-weight:500}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    padding:11px 15px;border-radius:11px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--ink);font-weight:600;
+  }
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:var(--danger);border-color:var(--danger-soft);background:var(--danger-soft)}
+  .btn.full{width:100%}
+  .btn.sm{padding:7px 11px;font-size:.85rem;border-radius:9px}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* ---------- Billing list ---------- */
+  .month-bar{
+    display:grid;grid-template-columns:1.3fr .9fr 1.1fr;gap:8px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px;box-shadow:var(--shadow);margin-bottom:14px;
+  }
+  .month-bar .field{margin:0}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+  .stat .v{font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
+  .stat .k{font-size:.72rem;color:var(--muted);margin-top:2px}
+  .stat.warn .v{color:var(--warn)}
+
+  .tenant{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    margin-bottom:10px;overflow:hidden;
+  }
+  .tenant-head{
+    display:flex;align-items:center;gap:10px;padding:12px 13px;width:100%;
+    border:0;background:transparent;text-align:left;color:var(--ink);
+  }
+  .tenant-head .lock{
+    font-weight:700;font-size:.8rem;background:var(--accent-soft);color:var(--accent-ink);
+    padding:3px 8px;border-radius:7px;white-space:nowrap;
+  }
+  .tenant-head .nm{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tenant-head .amt{font-weight:700;font-variant-numeric:tabular-nums}
+  .tenant-head .chev{color:var(--muted);transition:transform .2s;font-size:.8rem}
+  .tenant[open] .chev{transform:rotate(90deg)}
+  .tenant-body{padding:2px 13px 14px;border-top:1px solid var(--line)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--warn);display:inline-block;margin-left:4px}
+
+  .meter-grp{margin:12px 0 4px}
+  .meter-grp h4{font-size:.82rem;color:var(--muted);margin-bottom:6px;font-weight:700}
+  .meter-line{display:grid;grid-template-columns:64px 1fr 1fr 54px;gap:6px;align-items:center;margin-bottom:7px}
+  .meter-line .tag{font-size:.8rem;font-weight:600;color:var(--muted)}
+  .meter-line input{padding:8px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);width:100%;text-align:right}
+  .meter-line .prev{background:transparent;color:var(--muted)}
+  .meter-line .use{font-size:.85rem;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .mini{font-size:.72rem;color:var(--muted);text-align:center}
+
+  .bill-preview{
+    margin-top:12px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;
+    background:var(--surface-2);font-size:.9rem;
+  }
+  .bill-preview .prow{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+  .bill-preview .prow.total{border-top:1px solid var(--line);margin-top:6px;padding-top:6px;font-weight:700}
+
+  .empty{text-align:center;color:var(--muted);padding:40px 20px}
+  .empty p{margin:6px 0 16px}
+
+  .actionbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:linear-gradient(to top,var(--paper) 72%,transparent);
+    padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+  }
+  .actionbar .inner{max-width:560px;margin:0 auto}
+
+  .repeater-item{border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:10px;background:var(--surface-2)}
+  .repeater-item .rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .repeater-item .rhead b{font-size:.85rem}
+  .hint{font-size:.8rem;color:var(--muted);margin:-4px 2px 10px}
+
+  .toast{
+    position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
+    background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;
+    font-size:.9rem;font-weight:600;z-index:60;box-shadow:var(--shadow);
+    opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+  /* ---------- Flat billing rows (no click-to-open) ---------- */
+  .brow{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    margin-bottom:10px;padding:11px 12px;
+  }
+  .brow-head{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .brow-head .lock{
+    font-weight:700;font-size:.78rem;background:var(--accent-soft);color:var(--accent-ink);
+    padding:3px 7px;border-radius:7px;white-space:nowrap;
+  }
+  .brow-head .nm{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow-head .amt{font-weight:700;font-variant-numeric:tabular-nums}
+  .brow-head .ico{
+    border:1px solid var(--line);background:var(--surface-2);border-radius:8px;
+    width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:.95rem;padding:0;
+  }
+  .m-line{display:grid;grid-template-columns:minmax(0,1fr) 82px 13px minmax(0,1fr) 38px;gap:5px;align-items:center;margin-bottom:6px}
+  .m-line .ml{font-size:.8rem;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m-line .ar{text-align:center;color:var(--muted);font-size:.8rem}
+  .m-line input{padding:8px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);width:100%;text-align:right;font-variant-numeric:tabular-nums;font-size:.92rem}
+  .m-line input.pv{background:transparent;color:var(--muted);border-style:dashed}
+  .m-line input.cu{border-color:var(--accent)}
+  .m-line input.cu:focus{box-shadow:0 0 0 3px var(--accent-soft);outline:none}
+  .m-line .u{font-size:.8rem;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  .m-line .u b{color:var(--ink)}
+  .brow-cp{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:end;margin-top:8px}
+  .brow-cp .field{margin:0}
+  .brow-cp .field label{font-size:.74rem}
+  .brow-cp .field input{padding:8px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);width:100%;text-align:right}
+  .brow-cp .btn{padding:8px 10px;font-size:.8rem;white-space:nowrap}
+  .brow.miss{border-color:var(--warn)}
+
+  /* ---------- Summary / history ---------- */
+  .sum-bar{
+    display:flex;flex-wrap:wrap;gap:8px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px;box-shadow:var(--shadow);margin-bottom:12px;
+  }
+  .sum-bar .field{flex:1;min-width:130px}
+  .sum-bar select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)}
+  .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  table.rep{border-collapse:collapse;width:100%;font-size:.86rem}
+  table.rep th,table.rep td{padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+  table.rep th{background:var(--surface-2);font-weight:700;color:var(--muted);position:sticky;top:0}
+  table.rep th:first-child,table.rep td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+  table.rep th:first-child{background:var(--surface-2)}
+  table.rep td.name{text-align:left}
+  table.rep tr.clk{cursor:pointer}
+  table.rep tr.clk:hover td{background:var(--accent-soft)}
+  table.rep tr.tot td{font-weight:700;border-top:2px solid var(--line);border-bottom:0;background:var(--surface-2)}
+  table.rep tr.tot td:first-child{background:var(--surface-2)}
+  .rep-cap{font-size:.8rem;color:var(--muted);margin:10px 2px 4px}
+  table.rep td.cell{padding:3px 4px}
+  table.rep td.cell input{
+    width:74px;padding:6px 6px;border:1px solid var(--line);border-radius:7px;
+    background:var(--surface-2);color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;font-size:.85rem;
+  }
+  table.rep td.cell input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px var(--accent-soft)}
+  table.rep td.cur{outline:2px solid var(--accent);outline-offset:-2px}
+
+  .tpl-preview-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#57544c;padding:14px}
+  .tpl-preview{width:148mm;transform-origin:top left}
+  #tplForm .card-pad{padding-top:6px}
+  #tplForm .section-title{margin-top:14px}
+
+  /* ---------- Print overlay & A5 sheet ---------- */
+  #printRoot{display:none}
+  body.printing{overflow:hidden}
+  body.printing .app,body.printing .actionbar{display:none}
+  body.printing #printRoot{
+    display:block;position:fixed;inset:0;z-index:100;overflow:auto;
+    background:#57544c;padding:18px 0 60px;
+  }
+  .print-toolbar{
+    position:sticky;top:0;display:flex;gap:10px;justify-content:center;
+    padding:0 0 16px;
+  }
+  .print-toolbar button{
+    padding:10px 18px;border-radius:10px;border:0;font-weight:700;
+    background:var(--accent);color:#fff;box-shadow:var(--shadow);
+  }
+  .print-toolbar button.sec{background:#fff;color:#333}
+
+  .sheet{
+    width:148mm;min-height:210mm;background:#fff;color:#111;
+    margin:0 auto 16px;padding:11mm 12mm;
+    font-size:11.2pt;line-height:1.32;
+    box-shadow:0 4px 18px rgba(0,0,0,.4);
+    display:flex;flex-direction:column;
+  }
+  .sheet *{color:#111!important}
+  .s-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:6px}
+  .s-top .title{font-size:16pt;font-weight:700}
+  .s-top .market{font-size:10pt;color:#333!important}
+  .s-top .period{text-align:right;font-size:10.5pt}
+  .s-meta{display:flex;justify-content:space-between;gap:10px;margin:8px 0 6px;font-size:10pt}
+  .s-meta .box{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .s-meta .box.wide{flex:1.7 1 0;overflow:visible}
+  .s-meta .invno{font-size:8.6pt;letter-spacing:-.2px}
+  .s-meta .lbl{color:#555!important;font-size:9pt}
+  table.s-tb{width:100%;border-collapse:collapse;margin-top:2px}
+  table.s-tb th,table.s-tb td{border:1px solid #333;padding:3px 5px;font-size:10pt}
+  table.s-tb th{background:#eee;font-weight:700;text-align:center}
+  table.s-tb td.n{text-align:right;font-variant-numeric:tabular-nums}
+  table.s-tb td.c{text-align:center}
+  .s-total{display:flex;justify-content:flex-end;gap:16px;margin-top:6px;font-size:12.5pt;font-weight:700}
+  .s-total .amt{min-width:34mm;text-align:right}
+  .s-note{margin-top:auto;padding-top:8px;font-size:8.6pt;line-height:1.4;color:#222!important;border-top:1px solid #999}
+  table.s-tb td.pad{height:7.2mm}
+  .s-note b{font-weight:700}
+  .s-sign{display:flex;justify-content:space-between;margin-top:15mm;font-size:9pt;gap:20px}
+  .s-sign div{flex:1;text-align:center;border-top:1px dotted #555;padding-top:3px;color:#555!important}
+
+  /* summary report sheet (landscape) */
+  .rsheet{
+    width:270mm;max-width:96vw;background:#fff;color:#111;margin:0 auto 16px;
+    padding:12mm 14mm;box-shadow:0 4px 18px rgba(0,0,0,.4);font-size:10pt;
+  }
+  .rsheet *{color:#111!important}
+  .rsheet h2{font-size:15pt;margin-bottom:2px}
+  .rsheet .sub{font-size:10pt;color:#444!important;margin-bottom:8px}
+  table.rprint{width:100%;border-collapse:collapse}
+  table.rprint th,table.rprint td{border:1px solid #444;padding:3px 6px;font-size:9.2pt;text-align:right}
+  table.rprint th{background:#eee;font-weight:700;text-align:center}
+  table.rprint td:first-child,table.rprint th:first-child{text-align:left}
+  table.rprint tr.tot td{font-weight:700;background:#f0f0f0}
+
+  @media print{
+    @page{size:A5 portrait;margin:0}
+    @page land{size:A4 landscape;margin:8mm}
+    body.printing #printRoot{position:static;background:#fff;padding:0}
+    .print-toolbar{display:none}
+    .sheet{box-shadow:none;margin:0;width:auto;min-height:auto;
+      padding:9mm 10mm;page-break-after:always}
+    .sheet:last-child{page-break-after:auto}
+    body.report-mode .rsheet{box-shadow:none;margin:0;width:auto;max-width:none;padding:0;page:land}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <h1 id="brandName">บิลค่าเช่าตลาด</h1>
+      <span class="badge">A5 พร้อมปริ้น</span>
+      <button class="sync-chip off" id="syncChip" data-goto="settings" title="">ยังไม่ซิงค์</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="bill">ออกบิล</button>
+      <button role="tab" aria-selected="false" data-tab="meter">ค่าน้ำ–ไฟ</button>
+      <button role="tab" aria-selected="false" data-tab="tenants">ผู้เช่า</button>
+      <button role="tab" aria-selected="false" data-tab="template">เทมเพลตบิล</button>
+      <button role="tab" aria-selected="false" data-tab="summary">สรุป/ย้อนหลัง</button>
+      <button role="tab" aria-selected="false" data-tab="settings">ตั้งค่า</button>
+    </div>
+  </div>
+
+  <!-- ============ ออกบิล ============ -->
+  <section class="panel active" id="panel-bill">
+    <div class="month-bar">
+      <div class="field">
+        <label for="mSel">เดือน</label>
+        <select id="mSel"></select>
+      </div>
+      <div class="field">
+        <label for="ySel">ปี (พ.ศ.)</label>
+        <input id="ySel" type="number" inputmode="numeric" step="1">
+      </div>
+      <div class="field">
+        <label for="dSel">วันที่บิล</label>
+        <input id="dSel" type="date">
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div id="tenantList"></div>
+
+    <div class="empty" id="billEmpty" hidden>
+      <h3>ยังไม่มีผู้เช่า</h3>
+      <p>เพิ่มผู้เช่าก่อน แล้วกลับมากรอกมิเตอร์ออกบิลได้เลย</p>
+      <button class="btn primary" data-goto="tenants">ไปเพิ่มผู้เช่า</button>
+    </div>
+  </section>
+
+  <!-- ============ ผู้เช่า ============ -->
+  <section class="panel" id="panel-tenants">
+    <div class="btn-row" style="margin-bottom:14px">
+      <button class="btn primary" id="addTenantBtn">+ เพิ่มผู้เช่า</button>
+      <button class="btn ghost" id="seedBtn">โหลดข้อมูลจากไฟล์ Excel</button>
+    </div>
+    <div id="tenantEditor"></div>
+    <div id="tenantManage"></div>
+  </section>
+
+  <!-- ============ ค่าน้ำ–ไฟ (มิเตอร์ทั้งหมด) ============ -->
+  <section class="panel" id="panel-meter">
+    <div class="sum-bar">
+      <div class="field" style="margin:0">
+        <label for="meterKind">มิเตอร์</label>
+        <select id="meterKind">
+          <option value="e">ค่าไฟ</option>
+          <option value="w">ค่าน้ำ</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0">
+        <label for="meterMode">แสดง</label>
+        <select id="meterMode">
+          <option value="reading">เลขมิเตอร์ (แก้ได้)</option>
+          <option value="use">หน่วยที่ใช้</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint">แก้ตัวเลขในช่องได้เลย — บันทึกอัตโนมัติ และไปคิดในบิลเดือนนั้นให้ทันที · เลื่อนตารางซ้าย–ขวาเพื่อดูเดือนอื่น</p>
+    <div id="meterGrid"></div>
+    <div class="empty" id="meterEmpty" hidden><p>ยังไม่มีผู้เช่า — กด “โหลดข้อมูลจากไฟล์ Excel” ในแท็บผู้เช่าก่อน</p></div>
+  </section>
+
+  <!-- ============ เทมเพลตบิล ============ -->
+  <section class="panel" id="panel-template">
+    <p class="hint">แก้ข้อความ/ป้ายกำกับบนใบบิล ตัวอย่างด้านล่างจะอัปเดตทันที · ขนาดกระดาษ A5 คงที่</p>
+    <div id="tplForm"></div>
+    <div class="btn-row" style="margin:12px 0">
+      <button class="btn danger sm" id="tplReset">คืนค่าเริ่มต้น</button>
+    </div>
+    <div class="section-title">ตัวอย่างใบบิล</div>
+    <div class="tpl-preview-wrap"><div class="tpl-preview" id="tplPreview"></div></div>
+  </section>
+
+  <!-- ============ สรุป / ย้อนหลัง ============ -->
+  <section class="panel" id="panel-summary">
+    <div class="sum-bar">
+      <div class="field" style="margin:0">
+        <label for="sumScope">มุมมอง</label>
+        <select id="sumScope">
+          <option value="month">รายเดือน (แจกแจงทุกแผง)</option>
+          <option value="range">ย้อนหลังหลายเดือน (ตาราง)</option>
+        </select>
+      </div>
+      <div class="field" id="sumMonthWrap" style="margin:0">
+        <label for="sumMonth">เดือน</label>
+        <select id="sumMonth"></select>
+      </div>
+      <div class="field" id="sumMetricWrap" style="margin:0;display:none">
+        <label for="sumMetric">แสดงค่า</label>
+        <select id="sumMetric">
+          <option value="total">ยอดรวมบิล</option>
+          <option value="elecAmt">ค่าไฟ (บาท)</option>
+          <option value="waterAmt">ค่าน้ำ (บาท)</option>
+          <option value="elecUnits">หน่วยไฟ</option>
+          <option value="waterUnits">หน่วยน้ำ</option>
+          <option value="rent">ค่าเช่า</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-bottom:12px">
+      <button class="btn sm" id="sumPrintBtn">🖨️ พิมพ์สรุป</button>
+      <button class="btn sm" id="sumCsvBtn">บันทึก CSV</button>
+    </div>
+    <div id="sumBody"></div>
+    <div class="empty" id="sumEmpty" hidden><p>ยังไม่มีบิลที่บันทึกไว้ — ไปกรอกมิเตอร์ในแท็บ “ออกบิล” ก่อน</p></div>
+  </section>
+
+  <!-- ============ ตั้งค่า ============ -->
+  <section class="panel" id="panel-settings">
+    <div class="section-title">หัวบิล</div>
+    <div class="card card-pad">
+      <div class="field"><label>ชื่อตลาด / ชื่อผู้ให้เช่า</label><input id="set-marketName"></div>
+      <div class="row2">
+        <div class="field"><label>ธนาคาร</label><input id="set-bank"></div>
+        <div class="field"><label>ชื่อบัญชี</label><input id="set-payee"></div>
+      </div>
+      <div class="field"><label>เลขที่บัญชี</label><input id="set-account"></div>
+    </div>
+
+    <div class="section-title">เรตค่าน้ำ–ค่าไฟ &amp; ค่าปรับ</div>
+    <div class="card card-pad">
+      <div class="row2">
+        <div class="field"><label>ค่าไฟ / หน่วย (บาท)</label><input id="set-elecRate" type="number" inputmode="decimal"></div>
+        <div class="field"><label>ค่าน้ำ / หน่วย (บาท)</label><input id="set-waterRate" type="number" inputmode="decimal"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>ครบกำหนดชำระ วันที่</label><input id="set-dueDay" type="number" inputmode="numeric"></div>
+        <div class="field"><label>ค่าปรับ / วัน (บาท)</label><input id="set-penaltyPerDay" type="number" inputmode="numeric"></div>
+      </div>
+    </div>
+
+    <div class="section-title">หมายเหตุท้ายบิล</div>
+    <div class="card card-pad">
+      <div class="field"><textarea id="set-notes" rows="6"></textarea></div>
+      <p class="hint">พิมพ์บรรทัดละ 1 ข้อ — จะขึ้นเลข 1. 2. 3. ให้อัตโนมัติ</p>
+    </div>
+
+    <div class="section-title">ซิงค์ข้อมูลข้ามเครื่อง (ใช้ร่วมกันในครอบครัว)</div>
+    <div class="card card-pad">
+      <p class="hint" style="margin-top:2px">
+        ทำครั้งเดียว: สร้างโปรเจกต์ Firebase ฟรี → เปิด Firestore + Anonymous sign-in → คัดลอกก้อน
+        <code>firebaseConfig</code> มาวางด้านล่าง → ตั้ง “รหัสห้อง” ให้เหมือนกันทุกเครื่อง → กดเชื่อมต่อ
+        (วิธีละเอียดอยู่ในไฟล์ SETUP-ครอบครัว.md)
+      </p>
+      <div class="field">
+        <label>Firebase config (วางทั้งก้อน { ... })</label>
+        <textarea id="set-fbConfig" rows="7" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "appId": "..." }' style="font-family:ui-monospace,monospace;font-size:.82rem"></textarea>
+      </div>
+      <div class="field"><label>รหัสห้อง (ตั้งเอง เช่น talad-somsri — ทุกเครื่องต้องเหมือนกัน)</label>
+        <input id="set-fbRoom" placeholder="talad-somsri" autocapitalize="off" autocorrect="off"></div>
+      <div class="btn-row">
+        <button class="btn primary" id="syncConnectBtn">เชื่อมต่อ / ซิงค์</button>
+        <button class="btn" id="syncDisconnectBtn">หยุดซิงค์</button>
+      </div>
+      <p class="hint" id="syncDetail" style="margin-top:8px">สถานะ: ยังไม่ซิงค์</p>
+    </div>
+
+    <div class="section-title">เชื่อมต่อ LINE (LIFF)</div>
+    <div class="card card-pad">
+      <div class="field"><label>LIFF ID</label><input id="set-liffId" placeholder="เช่น 2000000000-abcdefgh"></div>
+      <p class="hint">ใส่เมื่อเปิดผ่านปุ่ม/เมนูใน LINE เท่านั้น — เปิดในเบราว์เซอร์ปกติไม่ต้องใส่</p>
+    </div>
+
+    <div class="section-title">ข้อมูล</div>
+    <div class="card card-pad">
+      <div class="btn-row">
+        <button class="btn" id="exportBtn">ส่งออกไฟล์สำรอง</button>
+        <button class="btn" id="importBtn">นำเข้าไฟล์</button>
+        <button class="btn danger" id="wipeBtn">ล้างข้อมูลทั้งหมด</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" hidden>
+      <p class="hint">ยังไม่ได้ซิงค์ = ข้อมูลเก็บในเครื่องนี้เท่านั้น — สำรองไฟล์ไว้ก่อนเปลี่ยนเครื่อง</p>
+    </div>
+    <p class="mini" style="text-align:center;margin:18px 0">บิลค่าเช่าตลาด · v2</p>
+  </section>
+</div>
+
+<div class="actionbar" id="actionbar">
+  <div class="inner">
+    <button class="btn primary full" id="printAllBtn">🖨️ พิมพ์บิลทั้งหมด (A5)</button>
+  </div>
+</div>
+
+<div id="printRoot">
+  <div class="print-toolbar">
+    <button id="doPrint">พิมพ์ / บันทึก PDF</button>
+    <button class="sec" id="closePrint">ปิด</button>
+  </div>
+  <div id="sheets"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js" crossorigin="anonymous" onerror="window.__noLiff=true"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------------- constants ---------------- */
+var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
+  "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
+  "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+var KEY = "market-bill-v2";
+var $ = function(s,el){return (el||document).querySelector(s);};
+var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));};
+var uid = function(){return "t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);};
+
+/* ---------------- seed data (from INVOICE_A5 2026.xlsm) ---------------- */
+var SEED = {"months":["2568-12","2569-01","2569-02","2569-03","2569-04","2569-05","2569-06","2569-07","2569-08","2569-09"],"readings":{"A01":{"e":[6898,6920,6938,6951,6966,6979,6996,7013,7029,7047],"w":[4,4,4,4,4,4,4,4,4,4]},"A02":{"e":[8064,8490,8915,9323,9727,9983,10299,10600,10945,11251],"w":[465,493,519,0,29,51,72,95,122,141]},"A03":{"e":[1533,1855,2104,2346,2695,2943,3264,3562,3868,4104],"w":[828,873,908,942,988,1032,1084,1140,1201,1256]},"A04":{"e":[3678,4009,4252,4532,4921,5215,5566,5837,6133,6437],"w":[374,380,385,390,396,401,405,409,411,417]},"A05":{"e":[2834,2908,2971,3037,3122,3160,3238,3303,3380,3448],"w":[845,864,883,899,916,930,951,968,988,1002]},"A06":{"e":[1771,1786,1795,1881,1881,1881,1881,1881,1881,1881],"w":[50,50,50,50,50,50,50,50,50,50]},"A07":{"e":[1797,1834,1864,1892,1927,1952,1978,2000,2024,2049],"w":[16,16,16,16,16,16,16,16,16,16]},"A08":{"e":[2696,2746,2782,2821,2868,2901,2950,2996,3039,3056],"w":[256,260,263,267,270,273,276,278,280,283]},"A09":{"e":[851,851,851,851,851,851,851,851,851,851],"w":[0,0,0,0,0,0,0,0,0,0]},"A10":{"e":[2579,2593,2602,2612,2625,2631,2646,2657,2668,2689],"w":[2,2,2,2,2,2,2,2,2,2]},"A11":{"e":[1599,1621,1637,1653,1671,1683,1705,1726,1753,1775],"w":[12,12,12,12,12,12,12,12,12,12]},"A12":{"e":[7706,7855,7974,8095,8249,8360,8500,8613,8752,8879],"w":[850,890,905,917,932,947,962,977,992,1007]},"A13":{"e":[4720,4822,4895,4973,5064,5127,5216,5295,5387,5471],"w":[573,589,602,614,630,642,657,670,683,694]},"A14":{"e":[350,700,901,1143,1525,1792,2139,2478,2871,3131],"w":[1056,1086,1100,1116,1139,1149,1151,1167,1188,1233]},"A15":{"e":[937,965,984,1008,1039,1059,1083,1105,1132,1153],"w":[439,454,468,482,500,512,529,541,555,570]},"A16":{"e":[1182,1206,1222,1246,1283,1310,1341,1370,1403,1428],"w":[238,240,241,242,243,245,247,248,250,251]},"A17":{"e":[5436,5449,5467,5488,5511,5527,5559,5590,5625,5658],"w":[723,731,748,766,784,799,818,835,855,873]},"A18":{"e":[2228,2228,2228,2228,2228,2232,2334,2455,2556,2704],"w":[97,97,97,97,97,97,116,116,118,121]},"A19":{"e":[null,null,null,null,null,null,null,null,null,null],"w":[551,557,584,627,671,698,733,758,801,819]}},"tenants":[{"name":"เสื้อผ้า","units":[["A01",6000]]},{"name":"ข้าวแกง","units":[["A02",6000],["A03",6000]]},{"name":"น้ำปั่น","units":[["A04",6000]]},{"name":"ต้มเลือดหมู","units":[["A05",6000]]},{"name":"เจ้ยา","units":[["A06",6500],["A07",7000],["A08",7000],["A09",7000]]},{"name":"ร้าน 20 บาท","units":[["A10",7000],["A11",7000]]},{"name":"ข้าวมันไก่","units":[["A12",6500]]},{"name":"ก๋วยเตี๋ยวเรือ","units":[["A13",5500]]},{"name":"เจ้อร","units":[["A14",8500]],"extras":[{"label":"ค่าน้ำ (ตู้แดง)","kind":"water","meter":"A19"}]},{"name":"เจ้นี","units":[["A15",4000]]},{"name":"ดอกไม้","units":[["A16",4500]]},{"name":"ลุงหวิน","units":[["A17",9000]]},{"name":"กล้วยปิ้ง","units":[["A18",3000]]},{"name":"ข้าวผัด","units":[["B01",7000]],"noutil":true},{"name":"ขายผัก","units":[["B02",4000]],"noutil":true},{"name":"ร้านเหนือ","units":[["B03",3000]],"noutil":true},{"name":"ข้าวแกง (B04)","units":[["B04",3000]],"noutil":true},{"name":"หมูปิ้ง","units":[["B05",3000]],"noutil":true},{"name":"น้ำแข็ง","units":[["B06",3000]],"noutil":true},{"name":"ไส้กรอก","units":[["B07",2500]],"noutil":true},{"name":"โจ๊ก","units":[["B08",2000]],"noutil":true},{"name":"หมูทอด","units":[["B09",2000]],"noutil":true},{"name":"ค่าจอดรถรายเดือน","units":[["C01",2100]],"noutil":true}]};
+
+var DEFAULT_TEMPLATE = {
+  title:"ใบแจ้งหนี้ / ใบเสร็จรับเงิน",
+  showMarket:true, showInvNo:true, showDate:true, showSign:true,
+  labelTenant:"ชื่อผู้เช่า", labelLock:"ล็อก/แผง", labelDate:"วันที่", labelInvNo:"เลขที่",
+  colNo:"ที่", colItem:"รายการ", colPrev:"เลขครั้งก่อน", colCurr:"เลขครั้งนี้",
+  colUse:"หน่วย", colRate:"ราคา/หน่วย", colAmt:"จำนวนเงิน",
+  itemRent:"ค่าเช่ารายเดือน", itemRentMulti:"รายเดือน {lock}",
+  itemElec:"ค่าไฟ", itemElecMulti:"ค่าไฟ {lock}",
+  itemWater:"ค่าน้ำ", itemWaterMulti:"ค่าน้ำ {lock}",
+  itemCarry:"ค้างจ่าย", itemPenalty:"ค่าปรับ",
+  totalLabel:"รวมเงินทั้งสิ้น", signLeft:"ผู้รับเงิน", signRight:"ผู้ชำระเงิน"
+};
+
+/* ---------------- state ---------------- */
+var DEFAULT_SETTINGS = {
+  marketName:"ตลาด (ใส่ชื่อในหน้าตั้งค่า)",
+  bank:"ธนาคารกรุงเทพ",
+  payee:"ปทุม เชื้อวู้หลิม",
+  account:"1284130802",
+  elecRate:10,
+  waterRate:20,
+  dueDay:10,
+  penaltyPerDay:50,
+  notes:[
+    'กรุณาโอนเงินเข้าบัญชี ธ.กรุงเทพ "ปทุม เชื้อวู้หลิม" เลขบัญชี "1284130802" และแนบสลิปโอนเงินแจ้งทางไลน์',
+    "ค่าเช่าชำระไม่เกินวันที่ 10 ของเดือน เกินกำหนดปรับวันละ 50 บาท",
+    "ค้างค่าเช่าเกิน 1 เดือนขึ้นไป ขอเอาล็อกคืนโดยไม่คืนค่ามัดจำ"
+  ],
+  liffId:"",
+  fbConfig:"",
+  fbRoom:""
+};
+
+var state = {settings:Object.assign({},DEFAULT_SETTINGS), template:Object.assign({},DEFAULT_TEMPLATE), tenants:[], bills:{}};
+
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw){
+      var d = JSON.parse(raw);
+      state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings||{});
+      state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template||{});
+      state.tenants = Array.isArray(d.tenants)? d.tenants : [];
+      state.bills = d.bills && typeof d.bills==="object" ? d.bills : {};
+      state.noAutoSeed = !!d.noAutoSeed;
+    }
+  }catch(e){ console.warn("load failed",e); }
+}
+function T(k){ return (state.template && state.template[k]!=null) ? state.template[k] : DEFAULT_TEMPLATE[k]; }
+
+/* save(scope, mk, tid)
+   scope: undefined/'core' -> settings+template+tenants ; 'bill' + mk (+tid) -> one month ; 'all' -> everything */
+function save(scope, mk, tid){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ toast("บันทึกไม่สำเร็จ: พื้นที่เต็ม"); }
+  if(sync.applying) return;                 // don't echo remote changes back
+  if(!sync.db) return;
+  if(scope === "all"){
+    sync.pushCore();
+    Object.keys(state.bills).forEach(function(k){ sync.pushBill(k); });
+  } else if(scope === "bill"){
+    sync.pushBill(mk, tid);
+  } else {
+    sync.pushCore();
+  }
+}
+
+/* ================= cross-device sync (Firebase Firestore) ================= */
+var sync = {
+  app:null, db:null, auth:null, roomRef:null,
+  applying:false, connected:false,
+  _coreT:null, _billT:{},
+  status:"off"   // off | connecting | on | error
+};
+function syncCfg(){
+  return {
+    config: state.settings.fbConfig || "",
+    room: (state.settings.fbRoom || "").trim()
+  };
+}
+function setSyncStatus(s, msg){
+  sync.status = s;
+  var el = $("#syncChip");
+  if(el){
+    el.className = "sync-chip " + s;
+    el.textContent = ({off:"ยังไม่ซิงค์", connecting:"กำลังเชื่อม…", on:"ซิงค์อยู่", error:"ซิงค์มีปัญหา"})[s] || s;
+    el.title = msg || "";
+  }
+  var d = $("#syncDetail"); if(d && msg) d.textContent = msg;
+}
+function loadFirebaseSdk(cb){
+  if(window.firebase && firebase.firestore){ cb(); return; }
+  var base = "https://www.gstatic.com/firebasejs/10.12.2/";
+  var files = ["firebase-app-compat.js","firebase-auth-compat.js","firebase-firestore-compat.js"];
+  (function next(i){
+    if(i>=files.length){ cb(); return; }
+    var s = document.createElement("script");
+    s.src = base + files[i];
+    s.onload = function(){ next(i+1); };
+    s.onerror = function(){ setSyncStatus("error","โหลด Firebase SDK ไม่สำเร็จ (เช็กอินเทอร์เน็ต)"); };
+    document.head.appendChild(s);
+  })(0);
+}
+function parseFbConfig(txt){
+  try{
+    // accept either pure JSON or a JS "const firebaseConfig = { ... };" paste
+    var m = String(txt).match(/\{[\s\S]*\}/);
+    if(!m) return null;
+    var json = m[0]
+      .replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g, '$1"$2":')  // quote keys
+      .replace(/,\s*}/g, "}")
+      .replace(/'/g, '"');
+    return JSON.parse(json);
+  }catch(e){ return null; }
+}
+function connectSync(interactive){
+  var c = syncCfg();
+  if(!c.config || !c.room){
+    if(interactive) toast("ใส่ Firebase config และรหัสห้องก่อน");
+    return;
+  }
+  var cfg = parseFbConfig(c.config);
+  if(!cfg || !cfg.projectId){
+    setSyncStatus("error","อ่าน Firebase config ไม่ได้ — วางทั้งก้อน { ... } จากหน้า Firebase");
+    if(interactive) toast("Firebase config ไม่ถูกต้อง");
+    return;
+  }
+  setSyncStatus("connecting");
+  loadFirebaseSdk(function(){
+    try{
+      sync.app = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
+      sync.auth = firebase.auth();
+      sync.db = firebase.firestore();
+    }catch(e){ setSyncStatus("error", String(e.message||e)); return; }
+    sync.auth.signInAnonymously().then(function(){
+      var room = c.room.replace(/[^A-Za-z0-9_-]/g,"") || "room";
+      sync.roomRef = sync.db.collection("rooms").doc(room);
+      attachListeners(interactive);
+    }).catch(function(e){
+      setSyncStatus("error","ล็อกอินไม่ได้: เปิด Anonymous ใน Firebase Auth ยัง? ("+(e.code||e.message)+")");
+    });
+  });
+}
+function attachListeners(interactive){
+  var core = sync.roomRef;
+  var bills = sync.roomRef.collection("bills");
+
+  core.get().then(function(snap){
+    if(!snap.exists && interactive && state.tenants.length){
+      if(confirm('ห้อง "'+sync.roomRef.id+'" ยังว่าง — อัปโหลดข้อมูลในเครื่องนี้ขึ้นไปเป็นตัวตั้งต้น?')){
+        sync.pushCore(true);
+        Object.keys(state.bills).forEach(function(k){ sync.pushBill(k, null, true); });
+      }
+    }
+  });
+
+  core.onSnapshot(function(snap){
+    if(!snap.exists) return;
+    var d = snap.data() || {};
+    sync.applying = true;
+    if(d.settings){
+      var localFb = { fbConfig: state.settings.fbConfig, fbRoom: state.settings.fbRoom };
+      state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings, localFb);
+    }
+    if(d.template) state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template);
+    if(Array.isArray(d.tenants)) state.tenants = d.tenants;
+    state.noAutoSeed = !!d.noAutoSeed;
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    sync.applying = false;
+    setSyncStatus("on", "อัปเดตล่าสุด "+new Date().toLocaleTimeString("th-TH"));
+    scheduleSyncRender();
+  }, function(e){ setSyncStatus("error", String(e.message||e)); });
+
+  bills.onSnapshot(function(qs){
+    sync.applying = true;
+    qs.docChanges().forEach(function(ch){
+      var mk = ch.doc.id;
+      if(ch.type === "removed"){ delete state.bills[mk]; }
+      else { state.bills[mk] = ch.doc.data() || {}; }
+    });
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    sync.applying = false;
+    scheduleSyncRender();
+  }, function(e){ setSyncStatus("error", String(e.message||e)); });
+
+  sync.connected = true;
+  setSyncStatus("on");
+}
+sync.pushCore = function(force){
+  if(!sync.roomRef) return;
+  clearTimeout(sync._coreT);
+  sync._coreT = setTimeout(function(){
+    var st = Object.assign({}, state.settings);
+    delete st.fbConfig; delete st.fbRoom;   // keep sync credentials device-local
+    sync.roomRef.set({
+      settings: st, template: state.template,
+      tenants: state.tenants, noAutoSeed: !!state.noAutoSeed,
+      _updated: Date.now()
+    }, {merge:true}).catch(function(e){ setSyncStatus("error", String(e.message||e)); });
+  }, force ? 0 : 700);
+};
+function reportSyncErr(e){ setSyncStatus("error", String((e && e.message) || e)); }
+sync.pushBill = function(mk, tid, force){
+  if(!sync.roomRef || !mk) return;
+  var key = mk + "|" + (tid||"*");
+  clearTimeout(sync._billT[key]);
+  sync._billT[key] = setTimeout(function(){
+    var ref = sync.roomRef.collection("bills").doc(mk);
+    var md = state.bills[mk] || {};
+    if(tid){
+      // update() replaces only the one tenant's field -> concurrent edits to
+      // different tenants in the same month don't clobber each other
+      var patch = {}; patch[tid] = md[tid] || firebase.firestore.FieldValue.delete();
+      ref.update(patch).catch(function(e){
+        if(e && (e.code === "not-found" || /No document to update/i.test(e.message||""))){
+          ref.set(md).catch(reportSyncErr);       // first write for this month
+        } else reportSyncErr(e);
+      });
+    } else {
+      ref.set(md).catch(reportSyncErr);
+    }
+  }, force ? 0 : 700);
+};
+var _syncRenderT = null;
+function scheduleSyncRender(){
+  clearTimeout(_syncRenderT);
+  _syncRenderT = setTimeout(function(){
+    var a = document.activeElement;
+    if(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && a.closest(".app")){
+      // user is typing — retry shortly instead of yanking focus
+      scheduleSyncRender();
+      return;
+    }
+    bindSettings();
+    renderAll();
+  }, 450);
+}
+function disconnectSync(){
+  try{ if(sync.app) sync.app.delete(); }catch(e){}
+  sync.app = sync.db = sync.auth = sync.roomRef = null;
+  sync.connected = false;
+  setSyncStatus("off");
+}
+
+/* ---------------- helpers ---------------- */
+function fmt(n){
+  n = Math.round((+n||0)*100)/100;
+  return n.toLocaleString("th-TH",{minimumFractionDigits:0, maximumFractionDigits:2});
+}
+function beToAd(y){ return (+y||0) - 543; }
+function currentPeriod(){
+  var y = +$("#ySel").value, m = +$("#mSel").value;
+  return {y:y, m:m, key:y+"-"+String(m).padStart(2,"0")};
+}
+function prevPeriodKey(y,m){
+  m = m-1; if(m<1){m=12;y=y-1;}
+  return y+"-"+String(m).padStart(2,"0");
+}
+function toast(msg){
+  var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(function(){t.classList.remove("show");},2200);
+}
+
+/* build the list of billable "units" for a tenant (always >=1) */
+function unitsOf(t){
+  if(t.units && t.units.length) return t.units;
+  return [{lock:t.lock||"", rent:+t.rent||0, elec:t.elec!==false, water:t.water!==false}];
+}
+function displayLock(t){
+  var u = unitsOf(t);
+  if(u.length===1) return u[0].lock || t.lock || "-";
+  return (t.lock && /-/.test(t.lock)) ? t.lock : (u[0].lock + "-" + u[u.length-1].lock);
+}
+function invoiceNo(t,p){
+  return "INV" + beToAd(p.y) + String(p.m).padStart(2,"0") + displayLock(t).replace(/\s+/g,"");
+}
+
+/* meter key: <lock>|e  <lock>|w   extra: x<i>|<tenantId> */
+function meterVal(period, key){
+  var b = state.bills[period] && state.bills[period][key.tid];
+  if(!b || !b.meters) return null;
+  var m = b.meters[key.k];
+  return (m && m.curr!=null && m.curr!=="") ? +m.curr : null;
+}
+
+/* compute a full bill object for tenant t in a given period (default = current) */
+function computeBill(t, period){
+  var p = period || currentPeriod();
+  var pkey = prevPeriodKey(p.y,p.m);
+  var rec = (state.bills[p.key] && state.bills[p.key][t.id]) || {};
+  var meters = rec.meters || {};
+  var s = state.settings;
+  var units = unitsOf(t);
+  var lines = [];
+  var multi = units.length>1;
+  var missing = false;
+  var isCur = !period || (currentPeriod().key === p.key);
+
+  function tpl(k,km,lock){ return multi ? String(T(km)).replace("{lock}",lock) : T(k); }
+  units.forEach(function(u){
+    lines.push({no:0, _kind:"rent", name: tpl("itemRent","itemRentMulti",u.lock), amount:+u.rent||0});
+    ["elec","water"].forEach(function(kind){
+      if(!u[kind]) return;
+      var k = u.lock + "|" + (kind==="elec"?"e":"w");
+      var m = meters[k] || {};
+      var prevAuto = null;
+      var pb = state.bills[pkey] && state.bills[pkey][t.id] && state.bills[pkey][t.id].meters;
+      if(pb && pb[k] && pb[k].curr!=null && pb[k].curr!=="") prevAuto = +pb[k].curr;
+      var prev = (m.prev!=null && m.prev!=="") ? +m.prev : (prevAuto!=null?prevAuto:null);
+      var curr = (m.curr!=null && m.curr!=="") ? +m.curr : null;
+      if(curr==null) missing = true;
+      var use = (prev!=null && curr!=null) ? Math.max(0, curr-prev) : 0;
+      var rate = kind==="elec"? +s.elecRate : +s.waterRate;
+      lines.push({
+        no:0,
+        name: kind==="elec" ? tpl("itemElec","itemElecMulti",u.lock) : tpl("itemWater","itemWaterMulti",u.lock),
+        prev:prev, curr:curr, use:use, rate:rate, amount:use*rate,
+        _mk:k, _kind:kind
+      });
+    });
+  });
+
+  (t.extras||[]).forEach(function(ex,i){
+    var k = "x"+i+"|"+t.id;
+    var m = meters[k] || {};
+    var pb = state.bills[pkey] && state.bills[pkey][t.id] && state.bills[pkey][t.id].meters;
+    var prevAuto = (pb && pb[k] && pb[k].curr!=null && pb[k].curr!=="") ? +pb[k].curr : null;
+    var prev = (m.prev!=null && m.prev!=="")? +m.prev : (prevAuto!=null?prevAuto:null);
+    var curr = (m.curr!=null && m.curr!=="")? +m.curr : null;
+    var use = (prev!=null && curr!=null)? Math.max(0,curr-prev) : 0;
+    var rate = ex.kind==="elec"? +s.elecRate : +s.waterRate;
+    lines.push({no:0, name:ex.label||"ค่าน้ำ (เพิ่ม)", prev:prev, curr:curr, use:use, rate:rate,
+      amount:use*rate, _mk:k, _kind:ex.kind, _extra:i});
+  });
+
+  var carry = +rec.prevBalance||0;
+  var penalty = +rec.penalty||0;
+  lines.push({no:0, _kind:"carry", name:T("itemCarry"), amount:carry});
+  lines.push({no:0, _kind:"penalty", name:T("itemPenalty"), amount:penalty});
+  lines.forEach(function(l,i){ l.no = i+1; });
+
+  var total = lines.reduce(function(a,l){return a+(+l.amount||0);},0);
+  var defDate = beToAd(p.y)+"-"+String(p.m).padStart(2,"0")+"-01";
+  var hasData = recHasData(state.bills[p.key] && state.bills[p.key][t.id]);
+  return {tenant:t, period:p, invNo:invoiceNo(t,p),
+    date: rec.date || (isCur ? ($("#dSel").value||defDate) : defDate),
+    lines:lines, total:total, missing:missing, hasData:hasData, units:units,
+    prevBalance:carry, penalty:penalty};
+}
+
+/* roll a bill's lines up into category totals */
+function billAgg(bill){
+  var a = {rent:0, elecUnits:0, elecAmt:0, waterUnits:0, waterAmt:0, carry:0, penalty:0, total:bill.total};
+  bill.lines.forEach(function(l){
+    if(l._kind==="rent") a.rent += (+l.amount||0);
+    else if(l._kind==="elec"){ a.elecUnits += (+l.use||0); a.elecAmt += (+l.amount||0); }
+    else if(l._kind==="water"){ a.waterUnits += (+l.use||0); a.waterAmt += (+l.amount||0); }
+    else if(l._kind==="carry") a.carry += (+l.amount||0);
+    else if(l._kind==="penalty") a.penalty += (+l.amount||0);
+  });
+  return a;
+}
+function recHasData(rec){
+  if(!rec) return false;
+  if(+rec.prevBalance>0 || +rec.penalty>0) return true;
+  var m = rec.meters||{};
+  return Object.keys(m).some(function(k){ return m[k] && m[k].curr!=null && m[k].curr!==""; });
+}
+function periodFromKey(k){ var p=k.split("-"); return {y:+p[0], m:+p[1], key:k}; }
+function labelPeriod(p){ return TH_MONTHS[p.m-1]+" "+p.y; }
+function periodsWithData(){
+  var keys = Object.keys(state.bills).filter(function(k){
+    var b = state.bills[k]; if(!b) return false;
+    return Object.keys(b).some(function(tid){ return recHasData(b[tid]); });
+  });
+  var cur = currentPeriod().key;
+  if(keys.indexOf(cur)<0) keys.push(cur);
+  keys.sort(); // ascending YYYY-MM
+  return keys.map(periodFromKey);
+}
+
+function ensureRec(t){
+  var p = currentPeriod();
+  if(!state.bills[p.key]) state.bills[p.key] = {};
+  if(!state.bills[p.key][t.id]) state.bills[p.key][t.id] = {meters:{}, prevBalance:0, penalty:0, date:$("#dSel").value};
+  var r = state.bills[p.key][t.id];
+  if(!r.meters) r.meters = {};
+  return r;
+}
+
+/* ================= RENDER: billing ================= */
+function currentBills(){ return state.tenants.map(function(t){ return computeBill(t); }); }
+
+function renderStats(){
+  var bills = currentBills();
+  var total = bills.reduce(function(a,b){return a+b.total;},0);
+  var miss = bills.filter(function(b){return b.missing;}).length;
+  $("#stats").innerHTML =
+    stat(bills.length, "บิลเดือนนี้") +
+    stat(fmt(total), "ยอดรวม (บาท)") +
+    stat(miss, "ยังไม่กรอกมิเตอร์", miss>0);
+}
+function stat(v,k,warn){
+  return '<div class="stat'+(warn?' warn':'')+'"><div class="v tnum">'+v+'</div><div class="k">'+k+'</div></div>';
+}
+
+/* ---- flat entry list: every meter input visible, no click-to-open ---- */
+function renderTenantList(){
+  var wrap = $("#tenantList");
+  var empty = $("#billEmpty");
+  if(!state.tenants.length){ wrap.innerHTML=""; empty.hidden=false; $("#actionbar").style.display="none"; return; }
+  empty.hidden = true; $("#actionbar").style.display="block";
+  wrap.innerHTML = "";
+  var p = currentPeriod();
+  var pkey = prevPeriodKey(p.y,p.m);
+  state.tenants.forEach(function(t){
+    wrap.appendChild(browEl(t, p, pkey));
+  });
+  renderStats();
+}
+
+function browEl(t, p, pkey){
+  var rec = ensureRec(t);
+  var units = unitsOf(t);
+  var multi = units.length>1;
+  var row = document.createElement("div");
+  row.className = "brow";
+  row.setAttribute("data-tid", t.id);
+
+  var head = document.createElement("div");
+  head.className = "brow-head";
+  head.innerHTML =
+    '<span class="lock">'+escapeHtml(displayLock(t))+'</span>'+
+    '<span class="nm">'+escapeHtml(t.name||"—")+'</span>'+
+    '<span class="amt tnum">0</span>';
+  var pbtn = document.createElement("button");
+  pbtn.className = "ico"; pbtn.title = "พิมพ์ใบนี้"; pbtn.textContent = "🖨";
+  pbtn.onclick = function(){ openPrint([t]); };
+  var ebtn = document.createElement("button");
+  ebtn.className = "ico"; ebtn.title = "แก้ข้อมูลผู้เช่า"; ebtn.textContent = "✎";
+  ebtn.onclick = function(){ switchTab("tenants"); editTenant(t.id); };
+  head.appendChild(pbtn); head.appendChild(ebtn);
+  row.appendChild(head);
+
+  function meterInputs(key, label, kind){
+    var m = rec.meters[key] || (rec.meters[key] = {});
+    var pb = state.bills[pkey] && state.bills[pkey][t.id] && state.bills[pkey][t.id].meters;
+    var prevAuto = (pb && pb[key] && pb[key].curr!=null && pb[key].curr!=="") ? +pb[key].curr : null;
+
+    var line = document.createElement("div");
+    line.className = "m-line";
+    var icon = kind==="elec" ? "⚡" : "💧";
+    line.innerHTML = '<span class="ml">'+icon+' '+escapeHtml(label)+'</span>';
+
+    var ip = document.createElement("input");
+    ip.className="pv"; ip.type="number"; ip.inputMode="numeric";
+    ip.placeholder = prevAuto!=null ? String(prevAuto) : "ก่อน";
+    ip.value = (m.prev!=null && m.prev!=="") ? m.prev : "";
+
+    var ar = document.createElement("span"); ar.className="ar"; ar.textContent="→";
+
+    var ic = document.createElement("input");
+    ic.className="cu"; ic.type="number"; ic.inputMode="numeric"; ic.placeholder="ครั้งนี้";
+    ic.value = (m.curr!=null && m.curr!=="") ? m.curr : "";
+
+    var u = document.createElement("span"); u.className="u";
+    function eff(){ return (m.prev!=null && m.prev!=="")? +m.prev : (prevAuto!=null?prevAuto:null); }
+    function upd(){
+      var pv = eff(), cv = (m.curr!=null && m.curr!=="")? +m.curr : null;
+      u.innerHTML = (pv!=null && cv!=null) ? ('<b>'+Math.max(0,cv-pv)+'</b>') : '—';
+    }
+    ip.oninput = function(){ m.prev = ip.value===""?"":+ip.value; save("bill", p.key, t.id); upd(); recalc(); };
+    ic.oninput = function(){ m.curr = ic.value===""?"":+ic.value; save("bill", p.key, t.id); upd(); recalc(); };
+    upd();
+    line.appendChild(ip); line.appendChild(ar); line.appendChild(ic); line.appendChild(u);
+    return line;
+  }
+
+  units.forEach(function(un){
+    ["elec","water"].forEach(function(kind){
+      if(!un[kind]) return;
+      var key = un.lock + "|" + (kind==="elec"?"e":"w");
+      var label = (kind==="elec"?"ค่าไฟ":"ค่าน้ำ") + (multi? " "+un.lock : "");
+      row.appendChild(meterInputs(key, label, kind));
+    });
+  });
+  (t.extras||[]).forEach(function(ex,i){
+    row.appendChild(meterInputs("x"+i+"|"+t.id, ex.label||"ค่าน้ำ (เพิ่ม)", ex.kind));
+  });
+
+  // ค้าง / ปรับ
+  var cp = document.createElement("div");
+  cp.className = "brow-cp";
+  var f1 = document.createElement("div"); f1.className="field";
+  f1.innerHTML = '<label>ค้างจ่าย</label>';
+  var i1 = document.createElement("input"); i1.type="number"; i1.inputMode="numeric";
+  i1.value = rec.prevBalance? rec.prevBalance : ""; i1.placeholder="0";
+  i1.oninput = function(){ rec.prevBalance = i1.value===""?0:+i1.value; save("bill", p.key, t.id); recalc(); };
+  f1.appendChild(i1);
+  var f2 = document.createElement("div"); f2.className="field";
+  f2.innerHTML = '<label>ค่าปรับ</label>';
+  var i2 = document.createElement("input"); i2.type="number"; i2.inputMode="numeric";
+  i2.value = rec.penalty? rec.penalty : ""; i2.placeholder="0";
+  i2.oninput = function(){ rec.penalty = i2.value===""?0:+i2.value; save("bill", p.key, t.id); recalc(); };
+  f2.appendChild(i2);
+  var pf = document.createElement("button");
+  pf.className="btn"; pf.textContent="คิดปรับ";
+  pf.onclick = function(){
+    var d = prompt("ชำระวันที่เท่าไร? (ครบกำหนดวันที่ "+ (state.settings.dueDay||10) +")");
+    if(d==null) return;
+    var late = Math.max(0, (+d) - (+state.settings.dueDay||10));
+    rec.penalty = late * (+state.settings.penaltyPerDay||0);
+    i2.value = rec.penalty || "";
+    save("bill", p.key, t.id); recalc();
+    toast(late? ("ปรับ "+late+" วัน = "+fmt(rec.penalty)+" บาท") : "ไม่เกินกำหนด");
+  };
+  cp.appendChild(f1); cp.appendChild(f2); cp.appendChild(pf);
+  row.appendChild(cp);
+
+  function recalc(){
+    var bill = computeBill(t);
+    $(".amt", head).textContent = fmt(bill.total);
+    row.classList.toggle("miss", bill.missing);
+    renderStats();
+  }
+  recalc();
+  return row;
+}
+
+/* ================= RENDER: summary / history ================= */
+var sumScope = "month", sumMonth = null, sumMetric = "total";
+
+function initSummaryControls(){
+  var per = periodsWithData();
+  var msel = $("#sumMonth");
+  msel.innerHTML = "";
+  per.slice().reverse().forEach(function(p){
+    var o = document.createElement("option"); o.value = p.key; o.textContent = labelPeriod(p);
+    msel.appendChild(o);
+  });
+  if(!sumMonth || per.map(function(p){return p.key;}).indexOf(sumMonth)<0)
+    sumMonth = per.length ? per[per.length-1].key : currentPeriod().key;
+  msel.value = sumMonth;
+}
+
+function renderSummary(){
+  initSummaryControls();
+  var body = $("#sumBody"), empty = $("#sumEmpty");
+  var per = periodsWithData();
+  var anyData = per.some(function(p){ return state.tenants.some(function(t){ return computeBill(t,p).hasData; }); });
+  if(!state.tenants.length || !anyData){ body.innerHTML=""; empty.hidden=false; return; }
+  empty.hidden = true;
+
+  $("#sumScope").value = sumScope;
+  $("#sumMonthWrap").style.display = sumScope==="month" ? "" : "none";
+  $("#sumMetricWrap").style.display = sumScope==="range" ? "" : "none";
+  $("#sumMetric").value = sumMetric;
+
+  body.innerHTML = sumScope==="month" ? monthReportHtml(periodFromKey(sumMonth)) : rangeReportHtml();
+
+  if(sumScope==="month"){
+    $$("#sumBody tr.clk").forEach(function(tr){
+      tr.onclick = function(){
+        var t = state.tenants.find(function(x){return x.id===tr.dataset.tid;});
+        if(t) openPrint([t], periodFromKey(sumMonth));
+      };
+    });
+  }
+}
+
+function monthReportHtml(p){
+  var tot = {rent:0,elecUnits:0,elecAmt:0,waterUnits:0,waterAmt:0,carry:0,penalty:0,total:0};
+  var rows = state.tenants.map(function(t){
+    var b = computeBill(t,p), a = billAgg(b);
+    ["rent","elecUnits","elecAmt","waterUnits","waterAmt","carry","penalty","total"].forEach(function(k){ tot[k]+=a[k]; });
+    return '<tr class="clk" data-tid="'+t.id+'">'+
+      '<td class="name">'+escapeHtml(displayLock(t))+'</td>'+
+      '<td class="name">'+escapeHtml(t.name||"—")+'</td>'+
+      '<td>'+fmt(a.rent)+'</td>'+
+      '<td>'+a.elecUnits+'</td><td>'+fmt(a.elecAmt)+'</td>'+
+      '<td>'+a.waterUnits+'</td><td>'+fmt(a.waterAmt)+'</td>'+
+      '<td>'+fmt(a.carry)+'</td><td>'+fmt(a.penalty)+'</td>'+
+      '<td>'+fmt(a.total)+'</td></tr>';
+  }).join("");
+  var totRow = '<tr class="tot"><td>รวม</td><td>'+state.tenants.length+' แผง</td>'+
+    '<td>'+fmt(tot.rent)+'</td><td>'+tot.elecUnits+'</td><td>'+fmt(tot.elecAmt)+'</td>'+
+    '<td>'+tot.waterUnits+'</td><td>'+fmt(tot.waterAmt)+'</td>'+
+    '<td>'+fmt(tot.carry)+'</td><td>'+fmt(tot.penalty)+'</td><td>'+fmt(tot.total)+'</td></tr>';
+  return '<div class="rep-cap">'+labelPeriod(p)+' · แตะแถวเพื่อพิมพ์บิลใบนั้น</div>'+
+    '<div class="tbl-scroll"><table class="rep"><thead><tr>'+
+    '<th>ล็อก</th><th>ชื่อ</th><th>ค่าเช่า</th><th>หน่วยไฟ</th><th>ค่าไฟ</th>'+
+    '<th>หน่วยน้ำ</th><th>ค่าน้ำ</th><th>ค้าง</th><th>ปรับ</th><th>รวม</th>'+
+    '</tr></thead><tbody>'+rows+totRow+'</tbody></table></div>';
+}
+
+function metricVal(a, key){ return a[key]; }
+function metricLabel(){
+  return {total:"ยอดรวมบิล",elecAmt:"ค่าไฟ (บาท)",waterAmt:"ค่าน้ำ (บาท)",
+    elecUnits:"หน่วยไฟ",waterUnits:"หน่วยน้ำ",rent:"ค่าเช่า"}[sumMetric];
+}
+function rangeReportHtml(){
+  var per = periodsWithData().slice(-12); // last 12 months with data
+  var colTot = per.map(function(){return 0;});
+  var rows = state.tenants.map(function(t){
+    var rowTot = 0;
+    var cells = per.map(function(p,i){
+      var v = metricVal(billAgg(computeBill(t,p)), sumMetric);
+      colTot[i]+=v; rowTot+=v;
+      return '<td>'+fmt(v)+'</td>';
+    }).join("");
+    return '<tr><td class="name">'+escapeHtml(displayLock(t))+' '+escapeHtml(t.name||"")+'</td>'+cells+'<td>'+fmt(rowTot)+'</td></tr>';
+  }).join("");
+  var grand = colTot.reduce(function(a,b){return a+b;},0);
+  var totRow = '<tr class="tot"><td>รวม</td>'+colTot.map(function(v){return '<td>'+fmt(v)+'</td>';}).join("")+'<td>'+fmt(grand)+'</td></tr>';
+  var head = '<th>แผง \\ เดือน</th>'+per.map(function(p){return '<th>'+TH_MONTHS_SHORT[p.m-1]+' '+String(p.y).slice(2)+'</th>';}).join("")+'<th>รวม</th>';
+  return '<div class="rep-cap">แสดง: '+metricLabel()+' · ย้อนหลัง '+per.length+' เดือน</div>'+
+    '<div class="tbl-scroll"><table class="rep"><thead><tr>'+head+'</tr></thead><tbody>'+rows+totRow+'</tbody></table></div>';
+}
+
+/* ---- summary CSV + print ---- */
+function summaryCsv(){
+  var lines = [];
+  if(sumScope==="month"){
+    var p = periodFromKey(sumMonth);
+    lines.push(["ล็อก","ชื่อ","ค่าเช่า","หน่วยไฟ","ค่าไฟ","หน่วยน้ำ","ค่าน้ำ","ค้าง","ปรับ","รวม"]);
+    state.tenants.forEach(function(t){
+      var a = billAgg(computeBill(t,p));
+      lines.push([displayLock(t),t.name||"",a.rent,a.elecUnits,a.elecAmt,a.waterUnits,a.waterAmt,a.carry,a.penalty,a.total]);
+    });
+  }else{
+    var per = periodsWithData().slice(-12);
+    lines.push(["แผง"].concat(per.map(labelPeriod)).concat(["รวม"]));
+    state.tenants.forEach(function(t){
+      var rt=0;
+      var row=[displayLock(t)+" "+(t.name||"")].concat(per.map(function(p){
+        var v=metricVal(billAgg(computeBill(t,p)),sumMetric); rt+=v; return v;
+      }));
+      row.push(rt); lines.push(row);
+    });
+  }
+  var csv = "﻿"+lines.map(function(r){
+    return r.map(function(c){ c=String(c); return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(",");
+  }).join("\n");
+  var blob = new Blob([csv],{type:"text/csv"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "market-summary-"+(sumScope==="month"?sumMonth:"range")+".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  toast("บันทึก CSV แล้ว");
+}
+function openReport(){
+  var host = $("#sheets");
+  host.innerHTML = "";
+  var el = document.createElement("div");
+  el.className = "rsheet";
+  var s = state.settings;
+  var title, tbl;
+  if(sumScope==="month"){
+    var p = periodFromKey(sumMonth);
+    title = "สรุปค่าเช่า–ค่าน้ำ–ค่าไฟ  "+labelPeriod(p);
+    tbl = monthReportHtml(p).replace(/class="rep"/,'class="rprint"').replace(/ clk"/g,'"');
+  }else{
+    title = "สรุปย้อนหลัง: "+metricLabel();
+    tbl = rangeReportHtml().replace(/class="rep"/,'class="rprint"');
+  }
+  tbl = tbl.replace(/<div class="tbl-scroll">/,"").replace(/<\/div>$/,"").replace(/<div class="rep-cap">[^<]*<\/div>/,"");
+  el.innerHTML = '<h2>'+escapeHtml(title)+'</h2><div class="sub">'+escapeHtml(s.marketName||"")+'</div>'+tbl;
+  host.appendChild(el);
+  document.body.classList.add("printing","report-mode");
+}
+
+/* ================= RENDER: tenants ================= */
+function renderTenantManage(){
+  var wrap = $("#tenantManage");
+  if(!state.tenants.length){ wrap.innerHTML = '<div class="empty"><p>ยังไม่มีผู้เช่า — กด “เพิ่มผู้เช่า” หรือ “โหลดตัวอย่าง”</p></div>'; return; }
+  wrap.innerHTML = '<div class="section-title">รายชื่อผู้เช่า ('+state.tenants.length+')</div>';
+  state.tenants.forEach(function(t){
+    var u = unitsOf(t);
+    var sub = u.map(function(x){return x.lock+" · "+fmt(x.rent)+"฿";}).join("  |  ");
+    var card = document.createElement("div");
+    card.className = "card card-pad";
+    card.innerHTML =
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center">'+
+        '<div><b>'+escapeHtml(t.name||"—")+'</b> <span class="mini">'+displayLock(t)+'</span><div class="mini">'+escapeHtml(sub)+(t.extras&&t.extras.length?'  + '+t.extras.length+' บรรทัดพิเศษ':'')+'</div></div>'+
+      '</div>'+
+      '<div class="btn-row" style="margin-top:10px">'+
+        '<button class="btn sm" data-edit="'+t.id+'">แก้ไข</button>'+
+        '<button class="btn sm danger" data-del="'+t.id+'">ลบ</button>'+
+      '</div>';
+    wrap.appendChild(card);
+  });
+  $$("[data-edit]",wrap).forEach(function(b){ b.onclick=function(){ editTenant(b.dataset.edit); }; });
+  $$("[data-del]",wrap).forEach(function(b){ b.onclick=function(){
+    var t = state.tenants.find(function(x){return x.id===b.dataset.del;});
+    if(confirm('ลบผู้เช่า "'+(t&&t.name)+'" ?')){
+      state.tenants = state.tenants.filter(function(x){return x.id!==b.dataset.del;});
+      save(); renderAll(); toast("ลบแล้ว");
+    }
+  };});
+}
+
+var editState = null;
+function editTenant(id){
+  var t = id ? JSON.parse(JSON.stringify(state.tenants.find(function(x){return x.id===id;}))) : null;
+  editState = t || { id:uid(), name:"", units:[{lock:"", rent:0, elec:true, water:true}], extras:[] };
+  if(!editState.units || !editState.units.length) editState.units = [{lock:editState.lock||"", rent:+editState.rent||0, elec:editState.elec!==false, water:editState.water!==false}];
+  if(!editState.extras) editState.extras = [];
+  renderEditor();
+  $("#tenantEditor").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function renderEditor(){
+  var host = $("#tenantEditor");
+  if(!editState){ host.innerHTML=""; return; }
+  var e = editState;
+  host.innerHTML = '<div class="section-title">'+(state.tenants.some(function(x){return x.id===e.id;})?"แก้ไขผู้เช่า":"ผู้เช่าใหม่")+'</div>';
+  var card = document.createElement("div");
+  card.className = "card card-pad";
+
+  card.appendChild(fieldEl("ชื่อผู้เช่า / ชื่อร้าน", e.name, function(v){e.name=v;}));
+
+  var uh = document.createElement("div");
+  uh.className = "section-title"; uh.style.margin = "6px 2px 8px";
+  uh.textContent = "ล็อก / แผง";
+  card.appendChild(uh);
+  card.appendChild(pHint("ถ้าผู้เช่ารายเดียวเช่าหลายล็อก (รวมบิลใบเดียว) กด “+ เพิ่มล็อก”"));
+
+  var uWrap = document.createElement("div");
+  e.units.forEach(function(u,idx){ uWrap.appendChild(unitEditor(u,idx)); });
+  card.appendChild(uWrap);
+
+  var addU = document.createElement("button");
+  addU.className = "btn sm"; addU.textContent = "+ เพิ่มล็อก (รวมบิล)";
+  addU.onclick = function(){ e.units.push({lock:"", rent:0, elec:true, water:true}); renderEditor(); };
+  card.appendChild(addU);
+
+  var xh = document.createElement("div");
+  xh.className="section-title"; xh.style.margin="18px 2px 8px";
+  xh.textContent = "บรรทัดพิเศษ (เช่น ค่าน้ำตู้แดง)";
+  card.appendChild(xh);
+  var xWrap = document.createElement("div");
+  e.extras.forEach(function(ex,i){ xWrap.appendChild(extraEditor(ex,i)); });
+  card.appendChild(xWrap);
+  var addX = document.createElement("button");
+  addX.className="btn sm"; addX.textContent="+ เพิ่มบรรทัดพิเศษ";
+  addX.onclick=function(){ e.extras.push({label:"ค่าน้ำ (ตู้แดง)", kind:"water"}); renderEditor(); };
+  card.appendChild(addX);
+
+  var save1 = document.createElement("div");
+  save1.className="btn-row"; save1.style.marginTop="18px";
+  var sb = document.createElement("button");
+  sb.className="btn primary"; sb.textContent="บันทึกผู้เช่า";
+  sb.onclick = saveTenant;
+  var cb = document.createElement("button");
+  cb.className="btn ghost"; cb.textContent="ยกเลิก";
+  cb.onclick = function(){ editState=null; renderEditor(); };
+  save1.appendChild(sb); save1.appendChild(cb);
+  card.appendChild(save1);
+
+  host.appendChild(card);
+}
+
+function unitEditor(u,idx){
+  var e = editState;
+  var box = document.createElement("div");
+  box.className = "repeater-item";
+  var rh = document.createElement("div");
+  rh.className="rhead";
+  rh.innerHTML = '<b>ล็อกที่ '+(idx+1)+'</b>';
+  if(e.units.length>1){
+    var del = document.createElement("button");
+    del.className="btn sm danger"; del.textContent="ลบ";
+    del.onclick=function(){ e.units.splice(idx,1); renderEditor(); };
+    rh.appendChild(del);
+  }
+  box.appendChild(rh);
+  var g = document.createElement("div"); g.className="row2";
+  g.appendChild(fieldEl("เลขล็อก", u.lock, function(v){u.lock=v.trim();}));
+  g.appendChild(fieldEl("ค่าเช่า/เดือน", u.rent, function(v){u.rent=+v||0;}, "number"));
+  box.appendChild(g);
+  box.appendChild(checkEl("เก็บค่าไฟ (มีมิเตอร์)", u.elec, function(v){u.elec=v;}));
+  box.appendChild(checkEl("เก็บค่าน้ำ (มีมิเตอร์)", u.water, function(v){u.water=v;}));
+  return box;
+}
+function extraEditor(ex,i){
+  var e = editState;
+  var box = document.createElement("div");
+  box.className="repeater-item";
+  var rh = document.createElement("div"); rh.className="rhead";
+  rh.innerHTML = '<b>บรรทัดพิเศษ '+(i+1)+'</b>';
+  var del = document.createElement("button");
+  del.className="btn sm danger"; del.textContent="ลบ";
+  del.onclick=function(){ e.extras.splice(i,1); renderEditor(); };
+  rh.appendChild(del);
+  box.appendChild(rh);
+  box.appendChild(fieldEl("ชื่อรายการ", ex.label, function(v){ex.label=v;}));
+  box.appendChild(selectEl("ประเภทมิเตอร์", ex.kind, [["water","ค่าน้ำ"],["elec","ค่าไฟ"]], function(v){ex.kind=v;}));
+  return box;
+}
+
+function saveTenant(){
+  var e = editState;
+  if(!e.name || !e.name.trim()){ toast("ใส่ชื่อผู้เช่าก่อน"); return; }
+  e.units = e.units.filter(function(u){return u.lock;});
+  if(!e.units.length){ toast("ใส่เลขล็อกอย่างน้อย 1 ล็อก"); return; }
+  delete e.lock; delete e.rent; delete e.elec; delete e.water;
+  var i = state.tenants.findIndex(function(x){return x.id===e.id;});
+  if(i>=0) state.tenants[i] = e; else state.tenants.push(e);
+  editState = null;
+  save(); renderAll();
+  switchTab("tenants");
+  toast("บันทึกแล้ว");
+}
+
+/* ================= form element helpers ================= */
+function fieldEl(label, val, onchange, type){
+  var f = document.createElement("div"); f.className="field";
+  var l = document.createElement("label"); l.textContent = label;
+  var i = document.createElement("input");
+  i.type = type||"text"; if(type==="number"){ i.inputMode="decimal"; }
+  i.value = (val!=null && val!=="")? val : "";
+  i.oninput = function(){ onchange(i.value); };
+  f.appendChild(l); f.appendChild(i);
+  return f;
+}
+function selectEl(label,val,opts,onchange){
+  var f = document.createElement("div"); f.className="field";
+  var l = document.createElement("label"); l.textContent=label;
+  var s = document.createElement("select");
+  opts.forEach(function(o){ var op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; s.appendChild(op); });
+  s.value = val;
+  s.onchange = function(){ onchange(s.value); };
+  f.appendChild(l); f.appendChild(s);
+  return f;
+}
+function checkEl(label,val,onchange){
+  var f = document.createElement("div"); f.className="field inline-check";
+  var i = document.createElement("input"); i.type="checkbox"; i.checked = val!==false;
+  i.id = "c"+Math.random().toString(36).slice(2);
+  i.onchange = function(){ onchange(i.checked); };
+  var l = document.createElement("label"); l.textContent = label; l.setAttribute("for", i.id);
+  f.appendChild(i); f.appendChild(l);
+  return f;
+}
+function pHint(txt){ var p=document.createElement("p"); p.className="hint"; p.textContent=txt; return p; }
+function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+/* ================= PRINT ================= */
+function openPrint(tenants, period){
+  var list = (tenants && tenants.length)? tenants : state.tenants;
+  if(!list.length){ toast("ไม่มีข้อมูลให้พิมพ์"); return; }
+  var host = $("#sheets");
+  host.innerHTML = "";
+  list.forEach(function(t){ host.appendChild(sheetEl(computeBill(t, period))); });
+  document.body.classList.remove("report-mode");
+  document.body.classList.add("printing");
+}
+function closePrint(){ document.body.classList.remove("printing","report-mode"); }
+
+function sheetEl(bill){
+  var s = state.settings, tp = state.template || DEFAULT_TEMPLATE;
+  var t = bill.tenant;
+  var el = document.createElement("div");
+  el.className = "sheet";
+
+  var rows = bill.lines.map(function(l){
+    var metered = (l.use!=null && l.rate!=null && (l.prev!=null || l.curr!=null || l.use>0));
+    return '<tr>'+
+      '<td class="c">'+l.no+'</td>'+
+      '<td>'+escapeHtml(l.name)+'</td>'+
+      '<td class="n">'+(metered? fmt(l.prev==null?0:l.prev) : "")+'</td>'+
+      '<td class="n">'+(metered? fmt(l.curr==null?0:l.curr) : "")+'</td>'+
+      '<td class="n">'+(metered? l.use : "")+'</td>'+
+      '<td class="n">'+(metered? fmt(l.rate) : "")+'</td>'+
+      '<td class="n">'+fmt(l.amount)+'</td>'+
+    '</tr>';
+  }).join("");
+  // pad the table with blank rows so short and long bills keep a consistent height
+  var MINROWS = 9;
+  for(var pr = bill.lines.length; pr < MINROWS; pr++){
+    rows += '<tr><td class="c pad">&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+  }
+
+  var notes = (s.notes||[]).filter(function(x){return x && x.trim();})
+    .map(function(x,i){ return (i+1)+". "+escapeHtml(x); }).join("<br>");
+
+  var dateStr = bill.date ? formatThaiDate(bill.date) : (bill.period.y+"");
+  var metaBoxes = '<div class="box"><div class="lbl">'+escapeHtml(T("labelTenant"))+'</div>'+escapeHtml(t.name||"-")+'</div>'+
+      '<div class="box"><div class="lbl">'+escapeHtml(T("labelLock"))+'</div>'+escapeHtml(displayLock(t))+'</div>';
+  if(tp.showInvNo) metaBoxes += '<div class="box wide"><div class="lbl">'+escapeHtml(T("labelInvNo"))+'</div><span class="invno">'+escapeHtml(bill.invNo)+'</span></div>';
+  if(tp.showDate) metaBoxes += '<div class="box"><div class="lbl">'+escapeHtml(T("labelDate"))+'</div>'+escapeHtml(dateStr)+'</div>';
+
+  el.innerHTML =
+    '<div class="s-top">'+
+      '<div><div class="title">'+escapeHtml(T("title"))+'</div>'+
+      (tp.showMarket? '<div class="market">'+escapeHtml(s.marketName||"")+'</div>' : '')+'</div>'+
+      '<div class="period">'+TH_MONTHS[bill.period.m-1]+' '+bill.period.y+'</div>'+
+    '</div>'+
+    '<div class="s-meta">'+metaBoxes+'</div>'+
+    '<table class="s-tb"><thead><tr>'+
+      '<th style="width:8mm">'+escapeHtml(T("colNo"))+'</th><th>'+escapeHtml(T("colItem"))+'</th>'+
+      '<th style="width:16mm">'+escapeHtml(T("colPrev"))+'</th>'+
+      '<th style="width:16mm">'+escapeHtml(T("colCurr"))+'</th><th style="width:12mm">'+escapeHtml(T("colUse"))+'</th>'+
+      '<th style="width:14mm">'+escapeHtml(T("colRate"))+'</th><th style="width:20mm">'+escapeHtml(T("colAmt"))+'</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="s-total"><span>'+escapeHtml(T("totalLabel"))+'</span><span class="amt">'+fmt(bill.total)+' บาท</span></div>'+
+    (notes? '<div class="s-note"><b>หมายเหตุ</b><br>'+notes+'</div>' : '<div class="s-note"></div>')+
+    (tp.showSign? '<div class="s-sign"><div>'+escapeHtml(T("signLeft"))+'</div><div>'+escapeHtml(T("signRight"))+'</div></div>' : '');
+  return el;
+}
+function formatThaiDate(iso){
+  var d = new Date(iso+"T00:00:00");
+  if(isNaN(d)) return iso;
+  return d.getDate()+" "+TH_MONTHS[d.getMonth()]+" "+(d.getFullYear()+543);
+}
+
+/* ================= settings ================= */
+function bindSettings(){
+  var s = state.settings;
+  var map = ["marketName","bank","payee","account","elecRate","waterRate","dueDay","penaltyPerDay","liffId"];
+  map.forEach(function(k){
+    var el = $("#set-"+k);
+    if(!el) return;
+    el.value = s[k];
+    el.oninput = function(){
+      s[k] = (el.type==="number") ? (el.value===""?0:+el.value) : el.value;
+      save();
+      if(k==="marketName") $("#brandName").textContent = s.marketName || "บิลค่าเช่าตลาด";
+      if(k==="elecRate"||k==="waterRate") renderTenantList();
+    };
+  });
+  var nt = $("#set-notes");
+  nt.value = (s.notes||[]).join("\n");
+  nt.oninput = function(){ s.notes = nt.value.split("\n"); save(); };
+
+  var fc = $("#set-fbConfig"), fr = $("#set-fbRoom");
+  if(fc){ fc.value = s.fbConfig||""; fc.oninput = function(){ s.fbConfig = fc.value; try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }; }
+  if(fr){ fr.value = s.fbRoom||"";   fr.oninput = function(){ s.fbRoom = fr.value; try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }; }
+}
+
+/* ================= import / export ================= */
+function exportData(){
+  var blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "market-bill-backup-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  toast("ดาวน์โหลดไฟล์สำรองแล้ว");
+}
+function importData(file){
+  var r = new FileReader();
+  r.onload = function(){
+    try{
+      var d = JSON.parse(r.result);
+      if(!d || typeof d!=="object") throw 0;
+      state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings||{});
+      state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template||{});
+      state.tenants = d.tenants||[];
+      state.bills = d.bills||{};
+      save("all"); initPeriodInputs(); bindSettings(); renderAll();
+      toast("นำเข้าข้อมูลสำเร็จ");
+    }catch(e){ toast("ไฟล์ไม่ถูกต้อง"); }
+  };
+  r.readAsText(file);
+}
+
+/* ================= seed from Excel ================= */
+function ensureBillRec(mk, tid){
+  if(!state.bills[mk]) state.bills[mk] = {};
+  if(!state.bills[mk][tid]){
+    var p = periodFromKey(mk);
+    state.bills[mk][tid] = {meters:{}, prevBalance:0, penalty:0,
+      date: beToAd(p.y)+"-"+String(p.m).padStart(2,"0")+"-01"};
+  }
+  if(!state.bills[mk][tid].meters) state.bills[mk][tid].meters = {};
+  return state.bills[mk][tid];
+}
+function seed(quiet){
+  state.settings.elecRate = 10;
+  state.settings.waterRate = 20;
+  state.noAutoSeed = false;
+  state.tenants = [];
+  state.bills = {};
+  SEED.tenants.forEach(function(ts){
+    var t = {id:uid(), name:ts.name, units:[], extras:[]};
+    ts.units.forEach(function(u){
+      t.units.push({lock:u[0], rent:u[1], elec:!ts.noutil, water:!ts.noutil});
+    });
+    (ts.extras||[]).forEach(function(ex){ t.extras.push({label:ex.label, kind:ex.kind}); });
+    SEED.months.forEach(function(mk, mi){
+      t.units.forEach(function(u){
+        var rd = SEED.readings[u.lock]; if(!rd) return;
+        if(rd.e && rd.e[mi]!=null) ensureBillRec(mk,t.id).meters[u.lock+"|e"] = {curr:rd.e[mi]};
+        if(rd.w && rd.w[mi]!=null) ensureBillRec(mk,t.id).meters[u.lock+"|w"] = {curr:rd.w[mi]};
+      });
+      (ts.extras||[]).forEach(function(ex, xi){
+        var rd = SEED.readings[ex.meter]; if(!rd) return;
+        var arr = ex.kind==="elec" ? rd.e : rd.w;
+        if(arr && arr[mi]!=null) ensureBillRec(mk,t.id).meters["x"+xi+"|"+t.id] = {curr:arr[mi]};
+      });
+    });
+    state.tenants.push(t);
+  });
+  save("all");
+  if(!quiet){
+    renderAll();
+    switchTab("tenants");
+    toast("โหลด "+state.tenants.length+" ราย + มิเตอร์ย้อนหลัง "+SEED.months.length+" เดือน");
+  }
+}
+
+/* ================= RENDER: meter grid (ค่าน้ำ–ไฟ ทั้งหมด) ================= */
+function meterColumns(){
+  var set = {};
+  SEED.months.forEach(function(m){ set[m]=1; });
+  Object.keys(state.bills).forEach(function(k){ set[k]=1; });
+  var cur = currentPeriod(); set[cur.key]=1;
+  var nx = cur.m===12 ? {y:cur.y+1,m:1} : {y:cur.y,m:cur.m+1};
+  set[nx.y+"-"+String(nx.m).padStart(2,"0")]=1;
+  return Object.keys(set).sort();
+}
+function meterRowsList(){
+  var rows = [];
+  state.tenants.forEach(function(t){
+    unitsOf(t).forEach(function(u){
+      rows.push({tid:t.id, name:t.name, lock:u.lock, hasE:u.elec!==false, hasW:u.water!==false, extra:false});
+    });
+    (t.extras||[]).forEach(function(ex,i){
+      rows.push({tid:t.id, name:t.name, lock:(ex.label||"(พิเศษ)"), key:"x"+i+"|"+t.id, extra:true,
+        hasE:ex.kind==="elec", hasW:ex.kind!=="elec"});
+    });
+  });
+  return rows;
+}
+function renderMeter(){
+  var host = $("#meterGrid"), empty = $("#meterEmpty");
+  if(!state.tenants.length){ host.innerHTML=""; empty.hidden=false; return; }
+  empty.hidden = true;
+  var kind = $("#meterKind").value, mode = $("#meterMode").value;
+  var suffix = kind==="e" ? "e" : "w";
+  var cols = meterColumns();
+  var rows = meterRowsList().filter(function(r){ return kind==="e" ? r.hasE : r.hasW; });
+  var curKey = currentPeriod().key;
+  var head = '<th>ล็อก · ชื่อ</th>' + cols.map(function(k){
+    var p = periodFromKey(k);
+    return '<th'+(k===curKey?' class="cur"':'')+'>'+TH_MONTHS_SHORT[p.m-1]+' '+String(p.y).slice(2)+'</th>';
+  }).join("");
+  var body = rows.map(function(r){
+    var mk = r.extra ? r.key : (r.lock+"|"+suffix);
+    var cells = cols.map(function(ck, ci){
+      var rec = state.bills[ck] && state.bills[ck][r.tid];
+      var m = rec && rec.meters && rec.meters[mk];
+      var cur = (m && m.curr!=null && m.curr!=="") ? +m.curr : null;
+      if(mode==="use"){
+        var prc = ci>0 ? (state.bills[cols[ci-1]] && state.bills[cols[ci-1]][r.tid]) : null;
+        var pm = prc && prc.meters && prc.meters[mk];
+        var pv = (pm && pm.curr!=null && pm.curr!=="") ? +pm.curr : null;
+        var u = (pv!=null && cur!=null) ? Math.max(0, cur-pv) : null;
+        return '<td'+(ck===curKey?' class="cur"':'')+'>'+(u==null?"–":u)+'</td>';
+      }
+      return '<td class="cell'+(ck===curKey?' cur':'')+'"><input type="number" inputmode="numeric" '+
+        'data-tid="'+r.tid+'" data-mk="'+escapeHtml(mk)+'" data-pk="'+ck+'" value="'+(cur==null?"":cur)+'"></td>';
+    }).join("");
+    return '<tr><td class="name">'+escapeHtml(r.lock)+' · '+escapeHtml(r.name)+'</td>'+cells+'</tr>';
+  }).join("");
+  var rate = state.settings[kind==="e" ? "elecRate" : "waterRate"];
+  host.innerHTML = '<div class="rep-cap">'+(kind==="e"?"ค่าไฟ":"ค่าน้ำ")+' · '+rate+' บ./หน่วย'+
+    (mode==="use"?' · ตัวเลข = หน่วยที่ใช้ (เดือนนี้ − เดือนก่อน)':'')+'</div>'+
+    '<div class="tbl-scroll"><table class="rep"><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table></div>';
+  if(mode==="reading"){
+    $$("#meterGrid input").forEach(function(inp){
+      inp.onchange = function(){
+        var rec = ensureBillRec(inp.dataset.pk, inp.dataset.tid);
+        if(inp.value==="") delete rec.meters[inp.dataset.mk];
+        else rec.meters[inp.dataset.mk] = {curr:+inp.value};
+        save("bill", inp.dataset.pk, inp.dataset.tid);
+      };
+    });
+  }
+}
+
+/* ================= RENDER: bill template ================= */
+var TPL_FIELDS = [
+  ["หัวบิล", [
+    ["title","ชื่อหัวบิล"],
+    ["showMarket","แสดงชื่อตลาดใต้หัวบิล","bool"],
+    ["showInvNo","แสดงเลขที่บิล","bool"],
+    ["showDate","แสดงวันที่","bool"],
+    ["showSign","แสดงช่องลงชื่อท้ายบิล","bool"],
+    ["labelTenant","ป้าย: ชื่อผู้เช่า"],["labelLock","ป้าย: ล็อก/แผง"],
+    ["labelInvNo","ป้าย: เลขที่"],["labelDate","ป้าย: วันที่"]
+  ]],
+  ["หัวตาราง", [
+    ["colNo","คอลัมน์ 'ที่'"],["colItem","คอลัมน์ 'รายการ'"],["colPrev","คอลัมน์ 'เลขครั้งก่อน'"],
+    ["colCurr","คอลัมน์ 'เลขครั้งนี้'"],["colUse","คอลัมน์ 'หน่วย'"],["colRate","คอลัมน์ 'ราคา/หน่วย'"],
+    ["colAmt","คอลัมน์ 'จำนวนเงิน'"]
+  ]],
+  ["ป้ายรายการในบิล", [
+    ["itemRent","ค่าเช่า (ผู้เช่าล็อกเดียว)"],["itemRentMulti","ค่าเช่า (หลายล็อก — ใช้ {lock})"],
+    ["itemElec","ค่าไฟ (ล็อกเดียว)"],["itemElecMulti","ค่าไฟ (หลายล็อก)"],
+    ["itemWater","ค่าน้ำ (ล็อกเดียว)"],["itemWaterMulti","ค่าน้ำ (หลายล็อก)"],
+    ["itemCarry","ค้างจ่าย"],["itemPenalty","ค่าปรับ"],["totalLabel","ป้ายยอดรวม"]
+  ]],
+  ["ท้ายบิล", [ ["signLeft","ช่องลงชื่อ (ซ้าย)"],["signRight","ช่องลงชื่อ (ขวา)"] ]]
+];
+function renderTemplate(){
+  var host = $("#tplForm"); host.innerHTML = "";
+  TPL_FIELDS.forEach(function(grp){
+    var st = document.createElement("div"); st.className = "section-title"; st.textContent = grp[0];
+    host.appendChild(st);
+    var card = document.createElement("div"); card.className = "card card-pad";
+    grp[1].forEach(function(f){
+      if(f[2]==="bool"){
+        card.appendChild(checkEl(f[1], state.template[f[0]]!==false, function(v){
+          state.template[f[0]] = v; save(); tplPreview();
+        }));
+      }else{
+        card.appendChild(fieldEl(f[1], state.template[f[0]]!=null ? state.template[f[0]] : DEFAULT_TEMPLATE[f[0]], function(v){
+          state.template[f[0]] = v; save(); tplPreview();
+        }));
+      }
+    });
+    host.appendChild(card);
+  });
+  tplPreview();
+}
+function tplPreview(){
+  var box = $("#tplPreview"); if(!box) return;
+  box.innerHTML = "";
+  var per = periodsWithData().slice(-1)[0] || currentPeriod();
+  var t = null;
+  for(var i=0;i<state.tenants.length;i++){ if(computeBill(state.tenants[i], per).hasData){ t = state.tenants[i]; break; } }
+  if(!t) t = state.tenants[0];
+  if(!t){ box.innerHTML = '<p style="padding:24px;color:#333">ยังไม่มีผู้เช่า — โหลดข้อมูลก่อน</p>'; return; }
+  box.appendChild(sheetEl(computeBill(t, per)));
+  box.style.transform = "scale(1)";
+  requestAnimationFrame(function(){
+    var wrap = box.parentElement;
+    var avail = wrap.clientWidth - 28;
+    var sc = Math.min(1, avail / box.offsetWidth);
+    box.style.transform = "scale(" + sc + ")";
+    wrap.style.height = (box.offsetHeight * sc + 28) + "px";
+  });
+}
+
+/* ================= tabs & init ================= */
+function switchTab(name){
+  $$(".tabs button").forEach(function(b){ b.setAttribute("aria-selected", b.dataset.tab===name); });
+  $$(".panel").forEach(function(p){ p.classList.toggle("active", p.id==="panel-"+name); });
+  $("#actionbar").style.display = (name==="bill" && state.tenants.length)? "block":"none";
+  if(name==="summary") renderSummary();
+  if(name==="meter") renderMeter();
+  if(name==="template") renderTemplate();
+  window.scrollTo(0,0);
+}
+function initPeriodInputs(){
+  var mSel = $("#mSel");
+  if(!mSel.options.length){
+    TH_MONTHS.forEach(function(m,i){ var o=document.createElement("option"); o.value=i+1; o.textContent=m; mSel.appendChild(o); });
+  }
+  var now = new Date();
+  mSel.value = now.getMonth()+1;
+  $("#ySel").value = now.getFullYear()+543;
+  var iso = now.toISOString().slice(0,10);
+  $("#dSel").value = iso.slice(0,8)+"01";
+  [mSel,$("#ySel"),$("#dSel")].forEach(function(el){
+    el.addEventListener("change", function(){ renderAll(); });
+  });
+}
+function renderAll(){
+  renderStats();
+  renderTenantList();
+  renderTenantManage();
+  renderEditor();
+  if($("#panel-meter").classList.contains("active")) renderMeter();
+  if($("#panel-template").classList.contains("active")) renderTemplate();
+  if($("#panel-summary").classList.contains("active")) renderSummary();
+  $("#brandName").textContent = state.settings.marketName && state.settings.marketName.indexOf("ใส่ชื่อ")<0 ? state.settings.marketName : "บิลค่าเช่าตลาด";
+}
+
+function boot(){
+  load();
+  if(!state.tenants.length && !state.noAutoSeed){
+    seed(true);   // โหลดข้อมูลจากไฟล์ Excel อัตโนมัติ (ครั้งแรก / ยังไม่มีผู้เช่า)
+  }
+  initPeriodInputs();
+  bindSettings();
+  renderAll();
+
+  $$(".tabs button").forEach(function(b){ b.onclick=function(){ switchTab(b.dataset.tab); }; });
+  $$("[data-goto]").forEach(function(b){ b.onclick=function(){ switchTab(b.dataset.goto); }; });
+  $("#addTenantBtn").onclick = function(){ editTenant(null); };
+  $("#seedBtn").onclick = function(){
+    if(state.tenants.length && !confirm("จะแทนที่รายชื่อผู้เช่า + มิเตอร์ทั้งหมดด้วยข้อมูลจากไฟล์ Excel?")) return;
+    seed();
+  };
+  $("#printAllBtn").onclick = function(){ openPrint(null); };
+  $("#doPrint").onclick = function(){ window.print(); };
+  $("#closePrint").onclick = closePrint;
+
+  $("#meterKind").onchange = renderMeter;
+  $("#meterMode").onchange = renderMeter;
+  $("#tplReset").onclick = function(){
+    if(confirm("คืนค่าเทมเพลตบิลเป็นค่าเริ่มต้น?")){
+      state.template = Object.assign({}, DEFAULT_TEMPLATE); save(); renderTemplate();
+    }
+  };
+
+  $("#sumScope").onchange = function(){ sumScope = this.value; renderSummary(); };
+  $("#sumMonth").onchange = function(){ sumMonth = this.value; renderSummary(); };
+  $("#sumMetric").onchange = function(){ sumMetric = this.value; renderSummary(); };
+  $("#sumCsvBtn").onclick = summaryCsv;
+  $("#sumPrintBtn").onclick = openReport;
+  $("#exportBtn").onclick = exportData;
+  $("#importBtn").onclick = function(){ $("#importFile").click(); };
+  $("#importFile").onchange = function(){ if(this.files[0]) importData(this.files[0]); this.value=""; };
+  $("#wipeBtn").onclick = function(){
+    if(sync.db && !confirm("ตอนนี้กำลังซิงค์อยู่ — ล้างในเครื่องนี้แล้วเดี๋ยวข้อมูลจากห้องจะซิงค์กลับมา ถ้าจะเริ่มใหม่จริงให้ 'หยุดซิงค์' ก่อน ต้องการล้างเครื่องนี้เลยไหม?")) return;
+    if(confirm("ล้างข้อมูลทั้งหมด (ผู้เช่า + บิล + เทมเพลต + ตั้งค่า) ?")){
+      var keepFb = {fbConfig:state.settings.fbConfig, fbRoom:state.settings.fbRoom};
+      state = {settings:Object.assign({},DEFAULT_SETTINGS,keepFb), template:Object.assign({},DEFAULT_TEMPLATE), tenants:[], bills:{}, noAutoSeed:true};
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+      initPeriodInputs(); bindSettings(); renderAll(); switchTab("bill");
+      toast("ล้างข้อมูลแล้ว");
+    }
+  };
+
+  $("#syncConnectBtn").onclick = function(){
+    state.settings.fbConfig = $("#set-fbConfig").value;
+    state.settings.fbRoom = $("#set-fbRoom").value;
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    if(sync.db) disconnectSync();
+    connectSync(true);
+  };
+  $("#syncDisconnectBtn").onclick = function(){ disconnectSync(); toast("หยุดซิงค์แล้ว (ข้อมูลยังอยู่ในเครื่อง)"); };
+
+  window.addEventListener("afterprint", function(){ /* keep overlay open for re-print */ });
+
+  // auto-connect sync if this device was set up before
+  if(state.settings.fbConfig && state.settings.fbRoom) connectSync(false);
+
+  // LIFF (optional)
+  var lid = state.settings.liffId;
+  if(lid && window.liff && !window.__noLiff){
+    try{
+      liff.init({liffId:lid}).catch(function(e){ console.warn("liff init",e); });
+    }catch(e){ console.warn(e); }
+  }
+}
+
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", boot);
+else boot();
+
+})();
+</script>
+</body>
+</html>
