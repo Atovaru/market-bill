@@ -363,6 +363,7 @@
 
   .sheet{
     position:relative;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
     --fs-title:16pt; --fs-market:10pt; --fs-meta:10pt; --fs-table:10pt;
     --fs-total:12.5pt; --fs-note:8.6pt; --fs-sign:9pt;
     width:148mm;min-height:210mm;background:#fff;color:#111;
@@ -382,9 +383,18 @@
   .s-meta .box.wide{flex:1.7 1 0;overflow:visible}
   .s-meta .invno{font-size:calc(var(--fs-meta) - 1.4pt);letter-spacing:-.2px}
   .s-meta .lbl{color:#555!important;font-size:calc(var(--fs-meta) - 1pt)}
-  table.s-tb{width:100%;border-collapse:collapse;margin-top:2px}
-  table.s-tb th,table.s-tb td{border:0.5pt solid #b0b0b0;padding:3px 5px;font-size:var(--fs-table)}
-  table.s-tb th{background:#f0f0f0;font-weight:700;text-align:center;border-color:#9a9a9a}
+  /* separate borders (not collapse) so each grid line is drawn once and prints as a
+     crisp hairline instead of doubling up thicker in the PDF */
+  table.s-tb{
+    width:100%;border-collapse:separate;border-spacing:0;margin-top:2px;
+    border-top:.6pt solid #bdbdbd;border-left:.6pt solid #bdbdbd;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  table.s-tb th,table.s-tb td{
+    border-right:.6pt solid #bdbdbd;border-bottom:.6pt solid #bdbdbd;
+    padding:3px 5px;font-size:var(--fs-table);
+  }
+  table.s-tb th{background:#f2f2f2;font-weight:700;text-align:center}
   table.s-tb td.n{text-align:right;font-variant-numeric:tabular-nums}
   table.s-tb td.c{text-align:center}
   .s-total{display:flex;justify-content:flex-end;gap:16px;margin-top:6px;font-size:var(--fs-total);font-weight:700}
@@ -717,7 +727,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.3.4";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.3.5";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-08";
 
 /* ---- theme (device-local, ไม่ซิงค์) ---- */
