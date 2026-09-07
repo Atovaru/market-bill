@@ -716,7 +716,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.3.0";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.3.1";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-08";
 
 /* ---- theme (device-local, ไม่ซิงค์) ---- */
@@ -788,7 +788,7 @@ var DEFAULT_SETTINGS = {
 };
 
 function cloneAuth(){ return JSON.parse(JSON.stringify(DEFAULT_AUTH)); }
-var state = {settings:Object.assign({},DEFAULT_SETTINGS), template:Object.assign({},DEFAULT_TEMPLATE), auth:cloneAuth(), tenants:[], bills:{}};
+var state = {settings:Object.assign({},DEFAULT_SETTINGS), template:Object.assign({},DEFAULT_TEMPLATE), auth:cloneAuth(), tenants:[], bills:{}, _pending:[]};
 
 function load(){
   try{
@@ -806,6 +806,7 @@ function load(){
       state.tenants = Array.isArray(d.tenants)? d.tenants : [];
       state.bills = d.bills && typeof d.bills==="object" ? d.bills : {};
       state.noAutoSeed = !!d.noAutoSeed;
+      state._pending = Array.isArray(d._pending) ? d._pending : [];
     }
   }catch(e){ console.warn("load failed",e); }
 }
@@ -813,10 +814,23 @@ function T(k){ return (state.template && state.template[k]!=null) ? state.templa
 
 /* save(scope, mk, tid)
    scope: undefined/'core' -> settings+template+tenants ; 'bill' + mk (+tid) -> one month ; 'all' -> everything */
+/* pending writes survive reload so a not-yet-pushed edit isn't clobbered by the sync pull */
+function markPending(k){
+  if(!state._pending) state._pending = [];
+  if(state._pending.indexOf(k) < 0) state._pending.push(k);
+}
+function clearPending(k){
+  if(!state._pending) return;
+  var i = state._pending.indexOf(k);
+  if(i >= 0){ state._pending.splice(i,1); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+}
 function save(scope, mk, tid){
+  if(sync.applying){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} return; }
+  if(scope === "bill" && mk && tid) markPending("b:"+mk+"|"+tid);
+  else if(scope === "all") markPending("core");
+  else markPending("core");
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
   catch(e){ toast("บันทึกไม่สำเร็จ: พื้นที่เต็ม"); }
-  if(sync.applying) return;                 // don't echo remote changes back
   if(!sync.db) return;
   if(scope === "all"){
     sync.pushCore();
@@ -919,7 +933,7 @@ function attachListeners(interactive){
 
   core.onSnapshot(function(snap){
     if(!snap.exists) return;
-    if(sync._coreT) return;   // local edit still queued — don't overwrite it
+    if(sync._coreT || (state._pending||[]).indexOf("core") >= 0) return;   // local edit not yet confirmed
     var d = snap.data() || {};
     sync.applying = true;
     if(d.settings){
@@ -941,12 +955,18 @@ function attachListeners(interactive){
     sync.applying = true;
     qs.docChanges().forEach(function(ch){
       var mk = ch.doc.id;
-      var pending = Object.keys(sync._billT).some(function(k){
-        return k.indexOf(mk+"|")===0 && sync._billT[k];
+      if(ch.type === "removed"){ delete state.bills[mk]; return; }
+      var incoming = ch.doc.data() || {};
+      var cur = state.bills[mk] || {};
+      var merged = Object.assign({}, cur, incoming);   // local base, remote wins per-tenant
+      var pfx = "b:" + mk + "|";
+      (state._pending||[]).forEach(function(pk){          // keep our not-yet-confirmed edits
+        if(pk.indexOf(pfx) === 0){
+          var tid = pk.slice(pfx.length);
+          if(cur[tid] !== undefined) merged[tid] = cur[tid];
+        }
       });
-      if(pending) return;   // our edit for this month is queued — apply ours, not this
-      if(ch.type === "removed"){ delete state.bills[mk]; }
-      else { state.bills[mk] = ch.doc.data() || {}; }
+      state.bills[mk] = merged;
     });
     try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
     sync.applying = false;
@@ -955,6 +975,19 @@ function attachListeners(interactive){
 
   sync.connected = true;
   setSyncStatus("on");
+  repushPending();   // re-send anything edited-then-reloaded before it synced
+}
+function repushPending(){
+  var p = (state._pending || []).slice();
+  if(p.indexOf("core") >= 0) sync.pushCore(true);
+  p.forEach(function(k){
+    if(k.indexOf("b:") !== 0) return;
+    var rest = k.slice(2), i = rest.indexOf("|");
+    if(i < 0){ clearPending(k); return; }
+    var mk = rest.slice(0, i), tid = rest.slice(i+1);
+    if(state.bills[mk] && state.bills[mk][tid]) sync.pushBill(mk, tid, true);
+    else clearPending(k);
+  });
 }
 sync.pushCore = function(force){
   if(!sync.roomRef) return;
@@ -967,7 +1000,7 @@ sync.pushCore = function(force){
       tenants: state.tenants, noAutoSeed: !!state.noAutoSeed,
       _updated: Date.now()
     }, {merge:true})
-    .then(function(){ sync._coreT = null; })
+    .then(function(){ sync._coreT = null; clearPending("core"); })
     .catch(function(e){ sync._coreT = null; setSyncStatus("error", String(e.message||e)); });
   }, force ? 0 : 400);
 };
@@ -989,21 +1022,25 @@ sync.pushBill = function(mk, tid, force){
   var key = mk + "|" + (tid||"*");
   clearTimeout(sync._billT[key]);
   sync._billT[key] = setTimeout(function(){
+    sync._billT[key] = null;
     var ref = sync.roomRef.collection("bills").doc(mk);
     var md = state.bills[mk] || {};
     if(tid){
       // update() replaces only the one tenant's field -> concurrent edits to
       // different tenants in the same month don't clobber each other
+      var done = function(){ clearPending("b:"+mk+"|"+tid); };
       var patch = {}; patch[tid] = md[tid] || firebase.firestore.FieldValue.delete();
-      ref.update(patch).catch(function(e){
+      ref.update(patch).then(done).catch(function(e){
         if(e && (e.code === "not-found" || /No document to update/i.test(e.message||""))){
-          ref.set(md).catch(reportSyncErr);       // first write for this month
+          ref.set(md).then(done).catch(reportSyncErr);   // first write for this month
         } else reportSyncErr(e);
       });
     } else {
-      ref.set(md).catch(reportSyncErr);
+      ref.set(md).then(function(){
+        Object.keys(md).forEach(function(t){ clearPending("b:"+mk+"|"+t); });
+      }).catch(reportSyncErr);
     }
-  }, force ? 0 : 700);
+  }, force ? 0 : 500);
 };
 var _syncRenderT = null;
 function scheduleSyncRender(){
@@ -2441,7 +2478,7 @@ function boot(){
     if(sync.db && !confirm("ตอนนี้กำลังซิงค์อยู่ — ล้างในเครื่องนี้แล้วเดี๋ยวข้อมูลจากห้องจะซิงค์กลับมา ถ้าจะเริ่มใหม่จริงให้ 'หยุดซิงค์' ก่อน ต้องการล้างเครื่องนี้เลยไหม?")) return;
     if(confirm("ล้างข้อมูลทั้งหมด (ผู้เช่า + บิล + เทมเพลต + ตั้งค่า) ?")){
       var keepFb = {fbConfig:state.settings.fbConfig, fbRoom:state.settings.fbRoom};
-      state = {settings:Object.assign({},DEFAULT_SETTINGS,keepFb), template:Object.assign({},DEFAULT_TEMPLATE), auth:cloneAuth(), tenants:[], bills:{}, noAutoSeed:true};
+      state = {settings:Object.assign({},DEFAULT_SETTINGS,keepFb), template:Object.assign({},DEFAULT_TEMPLATE), auth:cloneAuth(), tenants:[], bills:{}, noAutoSeed:true, _pending:[]};
       try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
       initPeriodInputs(); bindSettings(); renderAll(); switchTab("bill");
       toast("ล้างข้อมูลแล้ว");
