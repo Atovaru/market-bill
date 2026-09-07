@@ -260,16 +260,29 @@
     background:var(--surface);border:1px solid var(--line);border-radius:12px;
     margin-bottom:10px;padding:11px 12px;
   }
-  .brow-head{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .brow.off{opacity:.5}
+  .brow.off .m-line,.brow.off .brow-cp{filter:grayscale(1)}
+  .brow-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
   .brow-head .lock{
     font-weight:700;font-size:.78rem;background:var(--accent-soft);color:var(--accent-ink);
     padding:3px 7px;border-radius:7px;white-space:nowrap;
   }
   .brow-head .nm{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .brow-head .amt{font-weight:700;font-variant-numeric:tabular-nums}
+  .brow-tog{
+    flex:0 0 auto;width:36px;height:21px;border-radius:999px;border:0;padding:0;
+    background:var(--line);position:relative;cursor:pointer;transition:background .15s;
+  }
+  .brow-tog::after{
+    content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s;
+  }
+  .brow-tog.on{background:var(--accent)}
+  .brow-tog.on::after{left:16px}
+  .brow-head .amt.skip{color:var(--danger);font-size:.78rem;font-weight:700}
   .brow-head .ico{
     border:1px solid var(--line);background:var(--surface-2);border-radius:8px;
-    width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:.95rem;padding:0;
+    width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:.9rem;padding:0;flex:0 0 auto;
   }
   .m-line{display:grid;grid-template-columns:minmax(0,1fr) 82px 13px minmax(0,1fr) 38px;gap:5px;align-items:center;margin-bottom:6px}
   .m-line .ml{font-size:.8rem;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -404,7 +417,7 @@
 <body>
 <div class="login-gate" id="loginGate" hidden>
   <div class="login-box">
-    <h2>Market Bill</h2>
+    <h2>Market Bill <span id="loginVer" style="font-size:.6em;font-weight:600;color:var(--muted)"></span></h2>
     <p class="login-sub" id="loginSub">เข้าสู่ระบบก่อนใช้งาน</p>
     <div class="field"><label for="loginUser">ชื่อผู้ใช้</label>
       <input id="loginUser" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
@@ -424,7 +437,7 @@
   <div class="topbar">
     <div class="brand">
       <h1 id="brandName">Market Bill</h1>
-      <span class="badge">A5 พร้อมปริ้น</span>
+      <span class="badge" id="verBadge">v3.0.0</span>
       <button class="sync-chip off" id="syncChip" data-goto="settings" title="">ยังไม่ซิงค์</button>
     </div>
     <div class="tabs" role="tablist">
@@ -608,7 +621,7 @@
       <p class="hint">ยังไม่ได้ซิงค์ = ข้อมูลเก็บในเครื่องนี้เท่านั้น — สำรองไฟล์ไว้ก่อนเปลี่ยนเครื่อง</p>
     </div>
     </div><!-- /.admin-only -->
-    <p class="mini" style="text-align:center;margin:18px 0">Market Bill · v2</p>
+    <p class="mini" style="text-align:center;margin:18px 0" id="verLine">Market Bill</p>
   </section>
 </div>
 
@@ -639,6 +652,8 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
+var APP_VERSION = "3.1.0";   /* bump ทุกครั้งที่แก้ไข */
+var APP_BUILD = "2026-09-07";
 var $ = function(s,el){return (el||document).querySelector(s);};
 var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));};
 var uid = function(){return "t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);};
@@ -1326,14 +1341,26 @@ function ensureRec(t){
 /* ================= RENDER: billing ================= */
 function currentBills(){ return state.tenants.map(function(t){ return computeBill(t); }); }
 
+/* จะออกบิลให้ผู้เช่ารายนี้ในเดือนนี้ไหม (toggle ในแท็บออกบิล) — ค่าเริ่มต้น = ออก */
+function isBilled(t, period){
+  var p = period || currentPeriod();
+  var rec = state.bills[p.key] && state.bills[p.key][t.id];
+  return !(rec && rec.skipBill === true);
+}
+
 function renderStats(){
+  var p = currentPeriod();
   var bills = currentBills();
-  var total = bills.reduce(function(a,b){return a+b.total;},0);
-  var miss = bills.filter(function(b){return b.missing;}).length;
+  var on = bills.filter(function(b){ return isBilled(b.tenant, p); });
+  var total = on.reduce(function(a,b){return a+b.total;},0);
+  var miss = on.filter(function(b){return b.missing;}).length;
+  var off = bills.length - on.length;
   $("#stats").innerHTML =
-    stat(bills.length, "บิลเดือนนี้") +
+    stat(on.length + (off ? ' <span class="mini">/ '+bills.length+'</span>' : ''), "จะออกบิล") +
     stat(fmt(total), "ยอดรวม (บาท)") +
     stat(miss, "ยังไม่กรอกมิเตอร์", miss>0);
+  var pab = $("#printAllBtn");
+  if(pab) pab.textContent = "🖨️ พิมพ์บิลทั้งหมด (" + on.length + " ใบ)";
 }
 function stat(v,k,warn){
   return '<div class="stat'+(warn?' warn':'')+'"><div class="v tnum">'+v+'</div><div class="k">'+k+'</div></div>';
@@ -1361,6 +1388,7 @@ function browEl(t, p, pkey){
   var row = document.createElement("div");
   row.className = "brow";
   row.setAttribute("data-tid", t.id);
+  if(rec.skipBill === true) row.classList.add("off");
 
   var head = document.createElement("div");
   head.className = "brow-head";
@@ -1368,6 +1396,25 @@ function browEl(t, p, pkey){
     '<span class="lock">'+escapeHtml(displayLock(t))+'</span>'+
     '<span class="nm">'+escapeHtml(t.name||"—")+'</span>'+
     '<span class="amt tnum">0</span>';
+
+  // toggle: ออกบิลเดือนนี้ไหม
+  var tog = document.createElement("button");
+  tog.type = "button"; tog.className = "brow-tog";
+  function paintTog(){
+    var skip = rec.skipBill === true;
+    tog.classList.toggle("on", !skip);
+    tog.title = skip ? "ไม่ออกบิลเดือนนี้ (แตะเพื่อเปิด)" : "ออกบิลเดือนนี้ (แตะเพื่อปิด)";
+    row.classList.toggle("off", skip);
+  }
+  tog.onclick = function(){
+    rec.skipBill = !(rec.skipBill === true);
+    paintTog();
+    save("bill", p.key, t.id);
+    recalc();
+  };
+  paintTog();
+  head.insertBefore(tog, head.querySelector(".nm"));
+
   var pbtn = document.createElement("button");
   pbtn.className = "ico"; pbtn.title = "พิมพ์ใบนี้"; pbtn.textContent = "🖨";
   pbtn.onclick = function(){ openPrint([t]); };
@@ -1454,8 +1501,10 @@ function browEl(t, p, pkey){
 
   function recalc(){
     var bill = computeBill(t);
-    $(".amt", head).textContent = fmt(bill.total);
-    row.classList.toggle("miss", bill.missing);
+    var skip = rec.skipBill === true;
+    $(".amt", head).textContent = skip ? "ไม่ออกบิล" : fmt(bill.total);
+    $(".amt", head).classList.toggle("skip", skip);
+    row.classList.toggle("miss", bill.missing && !skip);
     renderStats();
   }
   recalc();
@@ -1795,9 +1844,12 @@ function billFileName(){
   return "MarketBill_" + beToAd(p.y) + String(p.m).padStart(2,"0") + "_" + nowStamp();
 }
 function openPrint(tenants, period){
-  var list = (tenants && tenants.length)? tenants : state.tenants;
-  if(!list.length){ toast("ไม่มีข้อมูลให้พิมพ์"); return; }
-  _printPeriod = period || currentPeriod();
+  var pr = period || currentPeriod();
+  var list = (tenants && tenants.length)
+    ? tenants                                        // เลือกพิมพ์รายใบ = พิมพ์เสมอ
+    : state.tenants.filter(function(t){ return isBilled(t, pr); });  // พิมพ์ทั้งหมด = เฉพาะที่เปิด toggle ออกบิล
+  if(!list.length){ toast("ไม่มีบิลที่เปิดให้ออกในเดือนนี้"); return; }
+  _printPeriod = pr;
   var host = $("#sheets");
   host.innerHTML = "";
   list.forEach(function(t){ host.appendChild(sheetEl(computeBill(t, period))); });
@@ -2174,6 +2226,12 @@ function renderAll(){
 }
 
 function boot(){
+  var vtxt = "v"+APP_VERSION;
+  if($("#verBadge")) $("#verBadge").textContent = vtxt;
+  if($("#loginVer")) $("#loginVer").textContent = vtxt;
+  if($("#verLine")) $("#verLine").textContent = "Market Bill  "+vtxt+"  ·  "+APP_BUILD;
+  document.title = "Market Bill "+vtxt;
+
   loadSession();
   load();
   if(!state.tenants.length && !state.noAutoSeed){
@@ -2213,7 +2271,7 @@ function boot(){
     window.print();
     setTimeout(function(){ document.title = orig; }, 1500);
   };
-  window.addEventListener("afterprint", function(){ document.title = "Market Bill"; });
+  window.addEventListener("afterprint", function(){ document.title = "Market Bill v"+APP_VERSION; });
   $("#closePrint").onclick = closePrint;
 
   $("#meterKind").onchange = renderMeter;
