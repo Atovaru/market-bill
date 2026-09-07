@@ -223,6 +223,24 @@
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
+  /* ---------- Login gate ---------- */
+  body.locked{overflow:hidden}
+  .login-gate{position:fixed;inset:0;z-index:200;background:var(--paper);
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-box{width:100%;max-width:330px;background:var(--surface);border:1px solid var(--line);
+    border-radius:16px;box-shadow:var(--shadow);padding:22px 20px}
+  .login-box h2{font-size:1.15rem}
+  .login-sub{color:var(--muted);font-size:.88rem;margin:3px 0 16px}
+  .login-err{color:var(--danger);font-size:.85rem;margin:0 0 10px;font-weight:600}
+  .login-remember{display:flex;align-items:center;gap:8px;font-size:.83rem;color:var(--muted);margin-top:12px}
+  .login-remember input{width:auto}
+  .user-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+  .user-row:last-child{border-bottom:0}
+  .user-row .un{flex:1;font-weight:600}
+  .user-row .role{font-size:.72rem;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);padding:1px 7px;border-radius:999px}
+  .whoami{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:.9rem}
+  .whoami b{font-weight:700}
+
   /* ---------- Flat billing rows (no click-to-open) ---------- */
   .brow{
     background:var(--surface);border:1px solid var(--line);border-radius:12px;
@@ -363,6 +381,19 @@
 </style>
 </head>
 <body>
+<div class="login-gate" id="loginGate" hidden>
+  <div class="login-box">
+    <h2>บิลค่าเช่าตลาด</h2>
+    <p class="login-sub" id="loginSub">เข้าสู่ระบบก่อนใช้งาน</p>
+    <div class="field"><label for="loginUser">ชื่อผู้ใช้</label>
+      <input id="loginUser" autocomplete="username" autocapitalize="off" autocorrect="off"></div>
+    <div class="field"><label for="loginPass">รหัสผ่าน</label>
+      <input id="loginPass" type="password" autocomplete="current-password"></div>
+    <p class="login-err" id="loginErr" hidden></p>
+    <button class="btn primary full" id="loginBtn">เข้าสู่ระบบ</button>
+    <label class="login-remember"><input type="checkbox" id="loginRemember" checked> จำการเข้าสู่ระบบในเครื่องนี้</label>
+  </div>
+</div>
 <div class="app">
   <div class="topbar">
     <div class="brand">
@@ -488,6 +519,9 @@
 
   <!-- ============ ตั้งค่า ============ -->
   <section class="panel" id="panel-settings">
+    <div class="section-title">ผู้ใช้งาน</div>
+    <div class="card card-pad" id="userMgmt"></div>
+
     <div class="section-title">หัวบิล</div>
     <div class="card card-pad">
       <div class="field"><label>ชื่อตลาด / ชื่อผู้ให้เช่า</label><input id="set-marketName"></div>
@@ -603,6 +637,12 @@ var DEFAULT_TEMPLATE = {
   totalLabel:"รวมเงินทั้งสิ้น", signLeft:"ผู้รับเงิน", signRight:"ผู้ชำระเงิน"
 };
 
+/* SHA-256("tigger411") */
+var DEFAULT_AUTH = { users: [
+  { u:"Admin", h:"e021aae9409e4be7c00a9e38227b1fbb36f906acbcc0d3fca85dd545b43d2026", role:"admin" }
+] };
+var SKEY = "market-bill-session";
+
 /* ---------------- state ---------------- */
 var DEFAULT_SETTINGS = {
   marketName:"ตลาด (ใส่ชื่อในหน้าตั้งค่า)",
@@ -623,7 +663,8 @@ var DEFAULT_SETTINGS = {
   fbRoom:""
 };
 
-var state = {settings:Object.assign({},DEFAULT_SETTINGS), template:Object.assign({},DEFAULT_TEMPLATE), tenants:[], bills:{}};
+function cloneAuth(){ return JSON.parse(JSON.stringify(DEFAULT_AUTH)); }
+var state = {settings:Object.assign({},DEFAULT_SETTINGS), template:Object.assign({},DEFAULT_TEMPLATE), auth:cloneAuth(), tenants:[], bills:{}};
 
 function load(){
   try{
@@ -632,6 +673,7 @@ function load(){
       var d = JSON.parse(raw);
       state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings||{});
       state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template||{});
+      state.auth = (d.auth && Array.isArray(d.auth.users) && d.auth.users.length) ? d.auth : cloneAuth();
       state.tenants = Array.isArray(d.tenants)? d.tenants : [];
       state.bills = d.bills && typeof d.bills==="object" ? d.bills : {};
       state.noAutoSeed = !!d.noAutoSeed;
@@ -755,11 +797,13 @@ function attachListeners(interactive){
       state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings, localFb);
     }
     if(d.template) state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template);
+    if(d.auth && Array.isArray(d.auth.users) && d.auth.users.length) state.auth = d.auth;
     if(Array.isArray(d.tenants)) state.tenants = d.tenants;
     state.noAutoSeed = !!d.noAutoSeed;
     try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
     sync.applying = false;
     setSyncStatus("on", "อัปเดตล่าสุด "+new Date().toLocaleTimeString("th-TH"));
+    if(!isAuthed()) logout();   // logged-in user was removed elsewhere
     scheduleSyncRender();
   }, function(e){ setSyncStatus("error", String(e.message||e)); });
 
@@ -785,7 +829,7 @@ sync.pushCore = function(force){
     var st = Object.assign({}, state.settings);
     delete st.fbConfig; delete st.fbRoom;   // keep sync credentials device-local
     sync.roomRef.set({
-      settings: st, template: state.template,
+      settings: st, template: state.template, auth: state.auth,
       tenants: state.tenants, noAutoSeed: !!state.noAutoSeed,
       _updated: Date.now()
     }, {merge:true}).catch(function(e){ setSyncStatus("error", String(e.message||e)); });
@@ -832,6 +876,175 @@ function disconnectSync(){
   sync.app = sync.db = sync.auth = sync.roomRef = null;
   sync.connected = false;
   setSyncStatus("off");
+}
+
+/* ================= login / users ================= */
+/* NOTE: this is a client-side gate only — it keeps casual users out, it is
+   not strong security. Anyone technical can bypass it by reading the code. */
+var session = null;
+
+function sha256(str){
+  var data = new TextEncoder().encode(String(str));
+  return crypto.subtle.digest("SHA-256", data).then(function(buf){
+    return Array.prototype.map.call(new Uint8Array(buf), function(b){
+      return ("0"+b.toString(16)).slice(-2);
+    }).join("");
+  });
+}
+function authUsers(){ return (state.auth && state.auth.users) || DEFAULT_AUTH.users; }
+function findUser(u){
+  u = String(u||"").trim().toLowerCase();
+  return authUsers().filter(function(x){ return x.u.toLowerCase()===u; })[0] || null;
+}
+function isAdmin(){ return !!(session && session.role==="admin"); }
+function isAuthed(){ return !!(session && findUser(session.u)); }
+function adminCount(){ return authUsers().filter(function(x){return x.role==="admin";}).length; }
+
+function loadSession(){
+  try{
+    var raw = localStorage.getItem(SKEY) || sessionStorage.getItem(SKEY);
+    var s = raw ? JSON.parse(raw) : null;
+    if(s && s.u) session = s;
+  }catch(e){}
+}
+function showGate(){
+  document.body.classList.add("locked");
+  var g = $("#loginGate"); g.hidden = false;
+  $("#loginErr").hidden = true;
+  $("#loginPass").value = "";
+  setTimeout(function(){ $("#loginUser").focus(); }, 50);
+}
+function hideGate(){
+  document.body.classList.remove("locked");
+  $("#loginGate").hidden = true;
+}
+function loginErr(msg){
+  var e = $("#loginErr"); e.textContent = msg; e.hidden = false;
+}
+function doLogin(retry){
+  var u = $("#loginUser").value, p = $("#loginPass").value;
+  var rec = findUser(u);
+  sha256(p).then(function(h){
+    if(rec && rec.h === h){
+      session = { u: rec.u, role: rec.role || "user", ts: Date.now() };
+      var store = $("#loginRemember").checked ? localStorage : sessionStorage;
+      try{ store.setItem(SKEY, JSON.stringify(session)); }catch(e){}
+      hideGate();
+      renderAll();
+      return;
+    }
+    if(!retry && sync.db){        // user list may still be syncing in
+      loginErr("กำลังตรวจสอบ…");
+      setTimeout(function(){ doLogin(true); }, 1500);
+      return;
+    }
+    loginErr("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+  });
+}
+function logout(){
+  session = null;
+  try{ localStorage.removeItem(SKEY); sessionStorage.removeItem(SKEY); }catch(e){}
+  showGate();
+}
+
+function renderUsers(){
+  var host = $("#userMgmt");
+  if(!host) return;
+  host.innerHTML = "";
+  var who = document.createElement("div");
+  who.className = "whoami";
+  who.innerHTML = 'เข้าใช้งานเป็น <b>'+escapeHtml(session ? session.u : "-")+'</b>'+
+    (isAdmin() ? ' <span class="user-row"><span class="role">admin</span></span>' : '');
+  var lo = document.createElement("button");
+  lo.className = "btn sm"; lo.textContent = "ออกจากระบบ";
+  lo.style.marginLeft = "auto";
+  lo.onclick = logout;
+  who.appendChild(lo);
+  host.appendChild(who);
+
+  // change my own password
+  var meBtn = document.createElement("button");
+  meBtn.className = "btn sm"; meBtn.textContent = "เปลี่ยนรหัสผ่านของฉัน";
+  meBtn.onclick = function(){ changePw(session.u); };
+  host.appendChild(meBtn);
+
+  if(!isAdmin()){
+    var note = document.createElement("p");
+    note.className = "hint"; note.style.margin = "10px 2px 0";
+    note.textContent = "ต้องเป็น admin ถึงจะเพิ่ม/ลบผู้ใช้ หรือแก้รหัสผ่านคนอื่นได้";
+    host.appendChild(note);
+    return;
+  }
+
+  var list = document.createElement("div");
+  list.style.marginTop = "12px";
+  authUsers().forEach(function(x){
+    var row = document.createElement("div");
+    row.className = "user-row";
+    row.innerHTML = '<span class="un">'+escapeHtml(x.u)+'</span><span class="role">'+escapeHtml(x.role||"user")+'</span>';
+    var chg = document.createElement("button");
+    chg.className = "btn sm"; chg.textContent = "รหัสผ่าน";
+    chg.onclick = function(){ changePw(x.u); };
+    row.appendChild(chg);
+    var del = document.createElement("button");
+    del.className = "btn sm danger"; del.textContent = "ลบ";
+    del.onclick = function(){ delUser(x.u); };
+    if(x.u.toLowerCase() === (session.u||"").toLowerCase()) del.disabled = true;
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+  host.appendChild(list);
+
+  var add = document.createElement("button");
+  add.className = "btn sm primary"; add.textContent = "+ เพิ่มผู้ใช้";
+  add.style.marginTop = "10px";
+  add.onclick = addUser;
+  host.appendChild(add);
+}
+
+function changePw(username){
+  var np = prompt("รหัสผ่านใหม่ของ \""+username+"\" (อย่างน้อย 4 ตัว):");
+  if(np == null) return;
+  np = np.trim();
+  if(np.length < 4){ toast("รหัสผ่านสั้นไป"); return; }
+  sha256(np).then(function(h){
+    var rec = findUser(username);
+    if(!rec) return;
+    rec.h = h;
+    save();
+    if(session && session.u.toLowerCase()===username.toLowerCase()){
+      // keep our session valid
+      try{ (localStorage.getItem(SKEY)?localStorage:sessionStorage).setItem(SKEY, JSON.stringify(session)); }catch(e){}
+    }
+    renderUsers();
+    toast("เปลี่ยนรหัสผ่าน "+username+" แล้ว");
+  });
+}
+function addUser(){
+  var u = prompt("ชื่อผู้ใช้ใหม่:");
+  if(u == null) return;
+  u = u.trim();
+  if(!/^[A-Za-z0-9ก-๙._-]{2,20}$/.test(u)){ toast("ชื่อผู้ใช้ไม่ถูกต้อง (2–20 ตัว)"); return; }
+  if(findUser(u)){ toast("มีชื่อผู้ใช้นี้แล้ว"); return; }
+  var p = prompt("รหัสผ่านของ \""+u+"\" (อย่างน้อย 4 ตัว):");
+  if(p == null) return;
+  p = p.trim();
+  if(p.length < 4){ toast("รหัสผ่านสั้นไป"); return; }
+  var role = confirm("ให้ \""+u+"\" เป็น admin (จัดการผู้ใช้ได้) ?\nกด OK = admin, Cancel = ผู้ใช้ทั่วไป") ? "admin" : "user";
+  sha256(p).then(function(h){
+    state.auth.users.push({ u:u, h:h, role:role });
+    save(); renderUsers();
+    toast("เพิ่มผู้ใช้ "+u+" แล้ว");
+  });
+}
+function delUser(username){
+  var rec = findUser(username);
+  if(!rec) return;
+  if(rec.role==="admin" && adminCount() <= 1){ toast("ต้องมี admin อย่างน้อย 1 คน"); return; }
+  if(!confirm('ลบผู้ใช้ "'+username+'" ?')) return;
+  state.auth.users = authUsers().filter(function(x){ return x.u.toLowerCase()!==username.toLowerCase(); });
+  save(); renderUsers();
+  toast("ลบผู้ใช้แล้ว");
 }
 
 /* ---------------- helpers ---------------- */
@@ -1550,9 +1763,11 @@ function importData(file){
       if(!d || typeof d!=="object") throw 0;
       state.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings||{});
       state.template = Object.assign({}, DEFAULT_TEMPLATE, d.template||{});
+      state.auth = (d.auth && Array.isArray(d.auth.users) && d.auth.users.length) ? d.auth : state.auth;
       state.tenants = d.tenants||[];
       state.bills = d.bills||{};
       save("all"); initPeriodInputs(); bindSettings(); renderAll();
+      if(!isAuthed()) logout();
       toast("นำเข้าข้อมูลสำเร็จ");
     }catch(e){ toast("ไฟล์ไม่ถูกต้อง"); }
   };
@@ -1767,6 +1982,7 @@ function renderAll(){
   renderTenantList();
   renderTenantManage();
   renderEditor();
+  renderUsers();
   if($("#panel-meter").classList.contains("active")) renderMeter();
   if($("#panel-template").classList.contains("active")) renderTemplate();
   if($("#panel-summary").classList.contains("active")) renderSummary();
@@ -1774,6 +1990,7 @@ function renderAll(){
 }
 
 function boot(){
+  loadSession();
   load();
   if(!state.tenants.length && !state.noAutoSeed){
     seed(true);   // โหลดข้อมูลจากไฟล์ Excel อัตโนมัติ (ครั้งแรก / ยังไม่มีผู้เช่า)
@@ -1781,6 +1998,11 @@ function boot(){
   initPeriodInputs();
   bindSettings();
   renderAll();
+
+  $("#loginBtn").onclick = function(){ doLogin(false); };
+  $("#loginPass").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(false); });
+  $("#loginUser").addEventListener("keydown", function(e){ if(e.key==="Enter") $("#loginPass").focus(); });
+  if(!isAuthed()) showGate();
 
   $$(".tabs button").forEach(function(b){ b.onclick=function(){ switchTab(b.dataset.tab); }; });
   $$("[data-goto]").forEach(function(b){ b.onclick=function(){ switchTab(b.dataset.goto); }; });
@@ -1813,7 +2035,7 @@ function boot(){
     if(sync.db && !confirm("ตอนนี้กำลังซิงค์อยู่ — ล้างในเครื่องนี้แล้วเดี๋ยวข้อมูลจากห้องจะซิงค์กลับมา ถ้าจะเริ่มใหม่จริงให้ 'หยุดซิงค์' ก่อน ต้องการล้างเครื่องนี้เลยไหม?")) return;
     if(confirm("ล้างข้อมูลทั้งหมด (ผู้เช่า + บิล + เทมเพลต + ตั้งค่า) ?")){
       var keepFb = {fbConfig:state.settings.fbConfig, fbRoom:state.settings.fbRoom};
-      state = {settings:Object.assign({},DEFAULT_SETTINGS,keepFb), template:Object.assign({},DEFAULT_TEMPLATE), tenants:[], bills:{}, noAutoSeed:true};
+      state = {settings:Object.assign({},DEFAULT_SETTINGS,keepFb), template:Object.assign({},DEFAULT_TEMPLATE), auth:cloneAuth(), tenants:[], bills:{}, noAutoSeed:true};
       try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
       initPeriodInputs(); bindSettings(); renderAll(); switchTab("bill");
       toast("ล้างข้อมูลแล้ว");
