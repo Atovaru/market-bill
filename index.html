@@ -234,6 +234,10 @@
   .login-err{color:var(--danger);font-size:.85rem;margin:0 0 10px;font-weight:600}
   .login-remember{display:flex;align-items:center;gap:8px;font-size:.83rem;color:var(--muted);margin-top:12px}
   .login-remember input{width:auto}
+  .pw-wrap{position:relative;display:flex;align-items:center}
+  .pw-wrap input{flex:1;padding-right:56px!important}
+  .pw-toggle{position:absolute;right:6px;border:0;background:transparent;color:var(--accent);font-weight:600;font-size:.8rem;padding:6px}
+  .pw-len{font-size:.75rem;color:var(--muted);margin-top:4px;display:block}
   .user-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.92rem}
   .user-row:last-child{border-bottom:0}
   .user-row .un{flex:1;font-weight:600}
@@ -386,9 +390,14 @@
     <h2>บิลค่าเช่าตลาด</h2>
     <p class="login-sub" id="loginSub">เข้าสู่ระบบก่อนใช้งาน</p>
     <div class="field"><label for="loginUser">ชื่อผู้ใช้</label>
-      <input id="loginUser" autocomplete="username" autocapitalize="off" autocorrect="off"></div>
+      <input id="loginUser" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
     <div class="field"><label for="loginPass">รหัสผ่าน</label>
-      <input id="loginPass" type="password" autocomplete="current-password"></div>
+      <div class="pw-wrap">
+        <input id="loginPass" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button type="button" id="loginShow" class="pw-toggle">แสดง</button>
+      </div>
+      <span class="pw-len" id="loginLen"></span>
+    </div>
     <p class="login-err" id="loginErr" hidden></p>
     <button class="btn primary full" id="loginBtn">เข้าสู่ระบบ</button>
     <label class="login-remember"><input type="checkbox" id="loginRemember" checked> จำการเข้าสู่ระบบในเครื่องนี้</label>
@@ -921,24 +930,34 @@ function hideGate(){
 function loginErr(msg){
   var e = $("#loginErr"); e.textContent = msg; e.hidden = false;
 }
+function finishLogin(rec){
+  session = { u: rec.u, role: rec.role || "user", ts: Date.now() };
+  var store = $("#loginRemember").checked ? localStorage : sessionStorage;
+  try{ store.setItem(SKEY, JSON.stringify(session)); }catch(e){}
+  $("#loginPass").value = "";
+  hideGate();
+  renderAll();
+}
 function doLogin(retry){
-  var u = $("#loginUser").value, p = $("#loginPass").value;
+  var u = $("#loginUser").value.trim(), p = $("#loginPass").value.trim();
   var rec = findUser(u);
-  sha256(p).then(function(h){
-    if(rec && rec.h === h){
-      session = { u: rec.u, role: rec.role || "user", ts: Date.now() };
-      var store = $("#loginRemember").checked ? localStorage : sessionStorage;
-      try{ store.setItem(SKEY, JSON.stringify(session)); }catch(e){}
-      hideGate();
-      renderAll();
-      return;
-    }
+  // fast path: untouched default admin — also works if crypto.subtle is unavailable
+  if(rec && u.toLowerCase()==="admin" && rec.h===DEFAULT_AUTH.users[0].h && p==="tigger411"){
+    finishLogin(rec); return;
+  }
+  var hp;
+  try{ hp = sha256(p); }
+  catch(e){ loginErr("เบราว์เซอร์นี้ใช้การเข้ารหัสไม่ได้ ลองเบราว์เซอร์อื่น"); return; }
+  hp.then(function(h){
+    if(rec && rec.h === h){ finishLogin(rec); return; }
     if(!retry && sync.db){        // user list may still be syncing in
       loginErr("กำลังตรวจสอบ…");
       setTimeout(function(){ doLogin(true); }, 1500);
       return;
     }
-    loginErr("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+    loginErr("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง — ตรวจว่าพิมพ์ tigger411 (9 ตัว) ตัวเล็กทั้งหมด");
+  }).catch(function(){
+    loginErr("เข้ารหัสไม่สำเร็จ ลองรีเฟรชหน้า หรือใช้เบราว์เซอร์อื่น");
   });
 }
 function logout(){
@@ -2002,6 +2021,15 @@ function boot(){
   $("#loginBtn").onclick = function(){ doLogin(false); };
   $("#loginPass").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(false); });
   $("#loginUser").addEventListener("keydown", function(e){ if(e.key==="Enter") $("#loginPass").focus(); });
+  $("#loginPass").addEventListener("input", function(){
+    var n = this.value.trim().length;
+    $("#loginLen").textContent = n ? ("พิมพ์ไป "+n+" ตัวอักษร") : "";
+  });
+  $("#loginShow").onclick = function(){
+    var i = $("#loginPass");
+    if(i.type==="password"){ i.type="text"; this.textContent="ซ่อน"; }
+    else { i.type="password"; this.textContent="แสดง"; }
+  };
   if(!isAuthed()) showGate();
 
   $$(".tabs button").forEach(function(b){ b.onclick=function(){ switchTab(b.dataset.tab); }; });
