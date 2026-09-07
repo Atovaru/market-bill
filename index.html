@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Market Bill</title>
+<script>try{var _t=localStorage.getItem('market-bill-theme');if(_t==='light'||_t==='dark')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Bai+Jamjuree:wght@400;500;600;700&family=Kanit:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&family=Mitr:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
@@ -89,8 +90,12 @@
     color:var(--accent-ink);background:var(--accent-soft);
     padding:2px 8px;border-radius:999px;
   }
-  .sync-chip{
+  .theme-btn{
     margin-left:auto;align-self:center;border:1px solid var(--line);border-radius:999px;
+    background:var(--surface-2);padding:3px 9px;font-size:.9rem;line-height:1;
+  }
+  .sync-chip{
+    align-self:center;border:1px solid var(--line);border-radius:999px;
     font-size:.72rem;font-weight:600;padding:3px 10px;background:var(--surface-2);color:var(--muted);
   }
   #panel-settings code{background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.85em}
@@ -385,12 +390,28 @@
   .s-total{display:flex;justify-content:flex-end;gap:16px;margin-top:6px;font-size:var(--fs-total);font-weight:700}
   .s-total .amt{min-width:34mm;text-align:right}
   table.s-tb td.pad{height:7.2mm}
-  /* footer (หมายเหตุ + ลงชื่อ) — pinned to the same spot at the bottom of every bill */
+  /* footer (หมายเหตุ + QR + ลงชื่อ) — pinned to the same spot at the bottom of every bill */
   .s-footer{position:absolute;left:0;right:0;bottom:0;padding:0 12mm 11mm}
-  .s-note{padding-top:8px;font-size:var(--fs-note);line-height:1.4;color:#222!important;border-top:1px solid #999}
+  .s-foot-main{display:flex;gap:6mm;align-items:flex-start;border-top:1px solid #999;padding-top:8px}
+  .s-note{flex:1;min-width:0;font-size:var(--fs-note);line-height:1.4;color:#222!important}
   .s-note b{font-weight:700}
-  .s-sign{display:flex;justify-content:space-between;margin-top:14mm;font-size:var(--fs-sign);gap:20px}
+  .s-qr{flex:0 0 auto;width:25mm;text-align:center}
+  .s-qr .box{
+    width:25mm;height:25mm;border:1px dashed #bbb;display:flex;align-items:center;
+    justify-content:center;font-size:6.5pt;color:#999!important;overflow:hidden;
+  }
+  .s-qr .box.has{border:0}
+  .s-qr .box img{width:100%;height:100%;object-fit:contain}
+  .s-qr .cap{font-size:7pt;color:#444!important;margin-top:1mm}
+  .s-sign{display:flex;justify-content:space-between;margin-top:10mm;font-size:var(--fs-sign);gap:20px}
   .s-sign div{flex:1;text-align:center;border-top:1px dotted #555;padding-top:3px;color:#555!important}
+  /* template tab: QR thumbnail */
+  .qr-thumb{
+    width:88px;height:88px;border:1px dashed var(--line);border-radius:8px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;background:var(--surface-2);
+    font-size:.68rem;color:var(--muted);overflow:hidden;
+  }
+  .qr-thumb img{width:100%;height:100%;object-fit:contain}
 
   /* summary report sheet (landscape) */
   .rsheet{
@@ -443,6 +464,7 @@
     <div class="brand">
       <h1 id="brandName">Market Bill</h1>
       <span class="badge" id="verBadge">v3.0.0</span>
+      <button class="theme-btn" id="themeBtn" title="สลับธีม สว่าง/มืด">🌗</button>
       <button class="sync-chip off" id="syncChip" data-goto="settings" title="">ยังไม่ซิงค์</button>
     </div>
     <div class="tabs" role="tablist">
@@ -524,7 +546,48 @@
 
   <!-- ============ เทมเพลตบิล ============ -->
   <section class="panel" id="panel-template">
-    <p class="hint">แก้ข้อความ/ฟอนต์/ขนาดตัวอักษรบนใบบิล ตัวอย่างด้านล่างอัปเดตทันที · ขนาดกระดาษ A5 คงที่</p>
+    <p class="hint">แก้ข้อมูล/ข้อความ/ฟอนต์บนใบบิล ตัวอย่างด้านล่างอัปเดตทันที · ขนาดกระดาษ A5 คงที่</p>
+
+    <div class="section-title">หัวบิล / บัญชีรับเงิน</div>
+    <div class="card card-pad">
+      <div class="field"><label>ชื่อตลาด / ชื่อผู้ให้เช่า</label><input id="set-marketName"></div>
+      <div class="row2">
+        <div class="field"><label>ธนาคาร</label><input id="set-bank"></div>
+        <div class="field"><label>ชื่อบัญชี</label><input id="set-payee"></div>
+      </div>
+      <div class="field"><label>เลขที่บัญชี</label><input id="set-account"></div>
+    </div>
+
+    <div class="section-title">เรตค่าน้ำ–ค่าไฟ &amp; ค่าปรับ</div>
+    <div class="card card-pad">
+      <div class="row2">
+        <div class="field"><label>ค่าไฟ / หน่วย (บาท)</label><input id="set-elecRate" type="number" inputmode="decimal"></div>
+        <div class="field"><label>ค่าน้ำ / หน่วย (บาท)</label><input id="set-waterRate" type="number" inputmode="decimal"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>ครบกำหนดชำระ วันที่</label><input id="set-dueDay" type="number" inputmode="numeric"></div>
+        <div class="field"><label>ค่าปรับ / วัน (บาท)</label><input id="set-penaltyPerDay" type="number" inputmode="numeric"></div>
+      </div>
+      <p class="hint" style="margin:6px 2px 0">เปลี่ยนเรตแล้วมีผลกับบิลทุกใบทันที</p>
+    </div>
+
+    <div class="section-title">QR Code รับชำระเงิน (มุมขวาท้ายบิล)</div>
+    <div class="card card-pad">
+      <div id="qrArea" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div id="qrThumb" class="qr-thumb"></div>
+        <div style="flex:1;min-width:150px">
+          <input type="file" id="qrFile" accept="image/*" hidden>
+          <div class="btn-row">
+            <button class="btn sm primary" id="qrPick">เลือกรูป QR</button>
+            <button class="btn sm danger" id="qrClear">ลบ QR</button>
+          </div>
+          <div class="field" style="margin:10px 0 0"><label>ข้อความใต้ QR (ไม่บังคับ)</label>
+            <input id="qrLabel" placeholder="เช่น สแกนจ่าย / พร้อมเพย์"></div>
+        </div>
+      </div>
+      <p class="hint" style="margin:8px 2px 0">ถ้ายังไม่มี จะเว้นกรอบสี่เหลี่ยมว่างไว้ที่มุมขวาท้ายบิล · ระบบย่อรูปให้อัตโนมัติ</p>
+    </div>
+
     <div id="tplForm"></div>
     <div class="btn-row" style="margin:12px 0">
       <button class="btn danger sm" id="tplReset">คืนค่าเริ่มต้น</button>
@@ -572,26 +635,16 @@
     <div class="section-title">ผู้ใช้งาน</div>
     <div class="card card-pad" id="userMgmt"></div>
 
-    <div class="section-title">หัวบิล</div>
+    <div class="section-title">หน้าตา / ธีม</div>
     <div class="card card-pad">
-      <div class="field"><label>ชื่อตลาด / ชื่อผู้ให้เช่า</label><input id="set-marketName"></div>
-      <div class="row2">
-        <div class="field"><label>ธนาคาร</label><input id="set-bank"></div>
-        <div class="field"><label>ชื่อบัญชี</label><input id="set-payee"></div>
+      <div class="field" style="margin:0"><label for="set-theme">โทนสี</label>
+        <select id="set-theme">
+          <option value="auto">อัตโนมัติ (ตามเครื่อง)</option>
+          <option value="light">โทนสว่าง</option>
+          <option value="dark">โทนมืด</option>
+        </select>
       </div>
-      <div class="field"><label>เลขที่บัญชี</label><input id="set-account"></div>
-    </div>
-
-    <div class="section-title">เรตค่าน้ำ–ค่าไฟ &amp; ค่าปรับ</div>
-    <div class="card card-pad">
-      <div class="row2">
-        <div class="field"><label>ค่าไฟ / หน่วย (บาท)</label><input id="set-elecRate" type="number" inputmode="decimal"></div>
-        <div class="field"><label>ค่าน้ำ / หน่วย (บาท)</label><input id="set-waterRate" type="number" inputmode="decimal"></div>
-      </div>
-      <div class="row2">
-        <div class="field"><label>ครบกำหนดชำระ วันที่</label><input id="set-dueDay" type="number" inputmode="numeric"></div>
-        <div class="field"><label>ค่าปรับ / วัน (บาท)</label><input id="set-penaltyPerDay" type="number" inputmode="numeric"></div>
-      </div>
+      <p class="hint" style="margin:8px 2px 0">ตั้งแยกในแต่ละเครื่อง · หรือกดปุ่ม 🌗 มุมขวาบนสลับเร็ว ๆ</p>
     </div>
 
     <div class="admin-only">
@@ -663,8 +716,27 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.1.2";   /* bump ทุกครั้งที่แก้ไข */
-var APP_BUILD = "2026-09-07";
+var APP_VERSION = "3.2.0";   /* bump ทุกครั้งที่แก้ไข */
+var APP_BUILD = "2026-09-08";
+
+/* ---- theme (device-local, ไม่ซิงค์) ---- */
+var TKEY = "market-bill-theme";
+function getTheme(){ try{ return localStorage.getItem(TKEY) || "auto"; }catch(e){ return "auto"; } }
+function applyTheme(v){
+  v = (v==="light"||v==="dark"||v==="auto") ? v : getTheme();
+  try{ localStorage.setItem(TKEY, v); }catch(e){}
+  if(v==="light"||v==="dark") document.documentElement.setAttribute("data-theme", v);
+  else document.documentElement.removeAttribute("data-theme");
+  var b = document.getElementById("themeBtn");
+  if(b) b.textContent = v==="light" ? "☀️" : v==="dark" ? "🌙" : "🌗";
+  var s = document.getElementById("set-theme");
+  if(s) s.value = v;
+}
+function cycleTheme(){
+  var order = ["auto","light","dark"], nx = order[(order.indexOf(getTheme())+1)%3];
+  applyTheme(nx);
+  toast("ธีม: " + ({auto:"อัตโนมัติ (ตามเครื่อง)", light:"โทนสว่าง", dark:"โทนมืด"})[nx]);
+}
 var $ = function(s,el){return (el||document).querySelector(s);};
 var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));};
 var uid = function(){return "t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);};
@@ -689,7 +761,8 @@ var DEFAULT_TEMPLATE = {
     "ค่าเช่าชำระไม่เกินวันที่ 10 ของเดือน เกินกำหนดปรับวันละ 50 บาท",
     "ค้างค่าเช่าเกิน 1 เดือนขึ้นไป ขอเอาล็อกคืนโดยไม่คืนค่ามัดจำ"
   ],
-  fsTitle:16, fsMarket:10, fsMeta:10, fsTable:10, fsTotal:12.5, fsNote:8.6, fsSign:9
+  fsTitle:16, fsMarket:10, fsMeta:10, fsTable:10, fsTotal:12.5, fsNote:8.6, fsSign:9,
+  qr:"", qrLabel:"สแกนจ่าย"
 };
 var TPL_FONTS = ["Bai Jamjuree","Sarabun","Kanit","Prompt","Mitr","Noto Sans Thai"];
 
@@ -1899,6 +1972,8 @@ function sheetEl(bill){
 
   var notes = (T("notes")||[]).filter(function(x){return x && x.trim();})
     .map(function(x,i){ return (i+1)+". "+escapeHtml(x); }).join("<br>");
+  var qr = /^data:image\//.test(T("qr")||"") ? T("qr") : "";
+  var qrLabel = qr ? (T("qrLabel")||"") : "";
 
   var dateStr = bill.date ? formatThaiDate(bill.date) : (bill.period.y+"");
   var metaBoxes = '<div class="box"><div class="lbl">'+escapeHtml(T("labelTenant"))+'</div>'+escapeHtml(t.name||"-")+'</div>'+
@@ -1921,7 +1996,14 @@ function sheetEl(bill){
     '</tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="s-total"><span>'+escapeHtml(T("totalLabel"))+'</span><span class="amt">'+fmt(bill.total)+' บาท</span></div>'+
     '<div class="s-footer">'+
-      (notes ? '<div class="s-note"><b>หมายเหตุ</b><br>'+notes+'</div>' : '') +
+      '<div class="s-foot-main">'+
+        '<div class="s-note">'+(notes ? '<b>หมายเหตุ</b><br>'+notes : '')+'</div>'+
+        '<div class="s-qr">'+
+          (qr ? '<div class="box has"><img src="'+qr+'" alt="QR"></div>'
+              : '<div class="box">QR ชำระเงิน</div>')+
+          (qrLabel ? '<div class="cap">'+escapeHtml(qrLabel)+'</div>' : '')+
+        '</div>'+
+      '</div>'+
       (tp.showSign ? '<div class="s-sign"><div>'+escapeHtml(T("signLeft"))+'</div><div>'+escapeHtml(T("signRight"))+'</div></div>' : '') +
     '</div>';
   return el;
@@ -1944,11 +2026,52 @@ function bindSettings(){
       s[k] = (el.type==="number") ? (el.value===""?0:+el.value) : el.value;
       save();
       if(k==="elecRate"||k==="waterRate") renderTenantList();
+      if($("#panel-template").classList.contains("active")) tplPreview();
     };
   });
   var fc = $("#set-fbConfig"), fr = $("#set-fbRoom");
   if(fc){ fc.value = s.fbConfig||""; fc.oninput = function(){ s.fbConfig = fc.value; try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }; }
   if(fr){ fr.value = s.fbRoom||"";   fr.oninput = function(){ s.fbRoom = fr.value; try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }; }
+}
+
+/* ================= QR code (ท้ายบิล) ================= */
+function paintQr(){
+  var thumb = $("#qrThumb"); if(!thumb) return;
+  var qr = /^data:image\//.test(T("qr")||"") ? T("qr") : "";
+  thumb.innerHTML = qr ? '<img src="'+qr+'" alt="QR">' : "ยังไม่มี QR";
+  var lbl = $("#qrLabel"); if(lbl && document.activeElement!==lbl) lbl.value = T("qrLabel")||"";
+}
+function setQr(dataUrl){
+  state.template.qr = dataUrl || "";
+  save(); paintQr();
+  if($("#panel-template").classList.contains("active")) tplPreview();
+}
+function handleQrFile(file){
+  if(!file || !/^image\//.test(file.type||"")){ toast("เลือกไฟล์รูปภาพ"); return; }
+  var reader = new FileReader();
+  reader.onload = function(){
+    var img = new Image();
+    img.onload = function(){
+      var max = 440, w = img.width, h = img.height, sc = Math.min(1, max/Math.max(w,h));
+      var cw = Math.max(1,Math.round(w*sc)), ch = Math.max(1,Math.round(h*sc));
+      var cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
+      var ctx = cv.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0,0,cw,ch);
+      ctx.drawImage(img,0,0,cw,ch);
+      var out;
+      try{ out = cv.toDataURL("image/png"); }catch(e){ toast("อ่านรูปไม่สำเร็จ"); return; }
+      if(out.length > 90000){
+        var j = cv.toDataURL("image/jpeg", 0.82);
+        if(j && j.length < out.length) out = j;
+      }
+      if(out.length > 700000){ toast("ไฟล์ใหญ่เกินไป ลองรูปเล็กกว่านี้"); return; }
+      setQr(out);
+      toast("อัปโหลด QR แล้ว");
+    };
+    img.onerror = function(){ toast("รูปนี้เปิดไม่ได้"); };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 /* ================= import / export ================= */
@@ -2098,7 +2221,7 @@ function renderMeter(){
 
 /* ================= RENDER: bill template ================= */
 var TPL_FIELDS = [
-  ["หัวบิล", [
+  ["ข้อความหัวบิล & ป้ายกำกับ", [
     ["title","ชื่อหัวบิล"],
     ["showMarket","แสดงชื่อตลาดใต้หัวบิล","bool"],
     ["showInvNo","แสดงเลขที่บิล","bool"],
@@ -2207,7 +2330,7 @@ function switchTab(name){
   $("#actionbar").style.display = (name==="bill" && state.tenants.length)? "block":"none";
   if(name==="summary") renderSummary();
   if(name==="meter") renderMeter();
-  if(name==="template") renderTemplate();
+  if(name==="template"){ bindSettings(); paintQr(); renderTemplate(); }
   window.scrollTo(0,0);
 }
 function initPeriodInputs(){
@@ -2231,12 +2354,14 @@ function renderAll(){
   renderEditor();
   renderUsers();
   applyPerms();
+  paintQr();
   if($("#panel-meter").classList.contains("active")) renderMeter();
-  if($("#panel-template").classList.contains("active")) renderTemplate();
+  if($("#panel-template").classList.contains("active")){ bindSettings(); renderTemplate(); }
   if($("#panel-summary").classList.contains("active")) renderSummary();
 }
 
 function boot(){
+  applyTheme();
   var vtxt = "v"+APP_VERSION;
   if($("#verBadge")) $("#verBadge").textContent = vtxt;
   if($("#loginVer")) $("#loginVer").textContent = vtxt;
@@ -2268,6 +2393,8 @@ function boot(){
 
   $$(".tabs button").forEach(function(b){ b.onclick=function(){ switchTab(b.dataset.tab); }; });
   $$("[data-goto]").forEach(function(b){ b.onclick=function(){ switchTab(b.dataset.goto); }; });
+  $("#themeBtn").onclick = cycleTheme;
+  $("#set-theme").onchange = function(){ applyTheme(this.value); };
   $("#addTenantBtn").onclick = function(){ editTenant(null); };
   $("#seedBtn").onclick = function(){
     if(state.tenants.length && !confirm("จะแทนที่รายชื่อผู้เช่า + มิเตอร์ทั้งหมดด้วยข้อมูลจากไฟล์ Excel?")) return;
@@ -2288,10 +2415,18 @@ function boot(){
   $("#meterKind").onchange = renderMeter;
   $("#meterMode").onchange = renderMeter;
   $("#tplReset").onclick = function(){
-    if(confirm("คืนค่าเทมเพลตบิลเป็นค่าเริ่มต้น?")){
-      state.template = Object.assign({}, DEFAULT_TEMPLATE); save(); renderTemplate();
+    if(confirm("คืนค่าเทมเพลตบิลเป็นค่าเริ่มต้น? (รวม QR)")){
+      state.template = Object.assign({}, DEFAULT_TEMPLATE); save(); renderTemplate(); paintQr();
     }
   };
+  $("#qrPick").onclick = function(){ $("#qrFile").click(); };
+  $("#qrFile").onchange = function(){ if(this.files && this.files[0]) handleQrFile(this.files[0]); this.value=""; };
+  $("#qrClear").onclick = function(){ if(T("qr")){ setQr(""); toast("ลบ QR แล้ว"); } };
+  $("#qrLabel").oninput = function(){
+    state.template.qrLabel = this.value; save();
+    if($("#panel-template").classList.contains("active")) tplPreview();
+  };
+  paintQr();
 
   $("#sumScope").onchange = function(){ sumScope = this.value; renderSummary(); };
   $("#sumMonth").onchange = function(){ sumMonth = this.value; renderSummary(); };
