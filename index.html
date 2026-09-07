@@ -716,7 +716,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.3.1";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.3.2";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-08";
 
 /* ---- theme (device-local, ไม่ซิงค์) ---- */
@@ -826,9 +826,10 @@ function clearPending(k){
 }
 function save(scope, mk, tid){
   if(sync.applying){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} return; }
+  // only track pending for per-tenant bill edits (safe to merge). core/all edits are
+  // NOT tracked — the debounced push handles them, and never re-pushing core on
+  // connect prevents a fresh device's sample data from overwriting the real cloud list.
   if(scope === "bill" && mk && tid) markPending("b:"+mk+"|"+tid);
-  else if(scope === "all") markPending("core");
-  else markPending("core");
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
   catch(e){ toast("บันทึกไม่สำเร็จ: พื้นที่เต็ม"); }
   if(!sync.db) return;
@@ -933,7 +934,7 @@ function attachListeners(interactive){
 
   core.onSnapshot(function(snap){
     if(!snap.exists) return;
-    if(sync._coreT || (state._pending||[]).indexOf("core") >= 0) return;   // local edit not yet confirmed
+    if(sync._coreT) return;   // a local core edit is still queued this session — don't overwrite it
     var d = snap.data() || {};
     sync.applying = true;
     if(d.settings){
@@ -978,15 +979,26 @@ function attachListeners(interactive){
   repushPending();   // re-send anything edited-then-reloaded before it synced
 }
 function repushPending(){
-  var p = (state._pending || []).slice();
-  if(p.indexOf("core") >= 0) sync.pushCore(true);
-  p.forEach(function(k){
-    if(k.indexOf("b:") !== 0) return;
+  // only per-tenant bill edits — never core (see save())
+  (state._pending || []).slice().forEach(function(k){
+    if(k.indexOf("b:") !== 0){ clearPending(k); return; }
     var rest = k.slice(2), i = rest.indexOf("|");
     if(i < 0){ clearPending(k); return; }
     var mk = rest.slice(0, i), tid = rest.slice(i+1);
     if(state.bills[mk] && state.bills[mk][tid]) sync.pushBill(mk, tid, true);
     else clearPending(k);
+  });
+}
+/* drop bill records whose tenant no longer exists (orphans from an old tenant-list swap) */
+function pruneOrphanBills(){
+  if(!state.tenants.length) return;
+  var ids = {}; state.tenants.forEach(function(t){ ids[t.id] = 1; });
+  var pend = state._pending || [];
+  Object.keys(state.bills).forEach(function(mk){
+    var m = state.bills[mk]; if(!m) return;
+    Object.keys(m).forEach(function(tid){
+      if(!ids[tid] && pend.indexOf("b:"+mk+"|"+tid) < 0) delete m[tid];
+    });
   });
 }
 sync.pushCore = function(force){
@@ -1052,6 +1064,8 @@ function scheduleSyncRender(){
       scheduleSyncRender();
       return;
     }
+    pruneOrphanBills();
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
     bindSettings();
     renderAll();
   }, 450);
