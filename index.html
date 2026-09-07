@@ -103,10 +103,15 @@
   .tabs::-webkit-scrollbar{display:none}
   .tabs button{
     flex:0 0 auto;border:0;background:transparent;color:var(--muted);
-    padding:9px 12px;border-radius:9px;font-weight:600;font-size:.85rem;white-space:nowrap;
+    padding:7px 11px;border-radius:9px;font-weight:600;font-size:.74rem;white-space:nowrap;
+    display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.1;
     transition:background .15s,color .15s;
   }
-  .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+  .tabs button svg{
+    width:19px;height:19px;display:block;fill:none;stroke:currentColor;
+    stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+  }
+  .tabs button[aria-selected="true"]{background:var(--surface);color:var(--accent-ink);box-shadow:var(--shadow)}
 
   .panel{display:none;animation:fade .2s ease}
   .panel.active{display:block}
@@ -441,12 +446,18 @@
       <button class="sync-chip off" id="syncChip" data-goto="settings" title="">ยังไม่ซิงค์</button>
     </div>
     <div class="tabs" role="tablist">
-      <button role="tab" aria-selected="true" data-tab="bill">ออกบิล</button>
-      <button role="tab" aria-selected="false" data-tab="meter">ค่าน้ำ–ไฟ</button>
-      <button role="tab" aria-selected="false" data-tab="tenants">ผู้เช่า</button>
-      <button role="tab" aria-selected="false" data-tab="template">เทมเพลตบิล</button>
-      <button role="tab" aria-selected="false" data-tab="summary">สรุป/ย้อนหลัง</button>
-      <button role="tab" aria-selected="false" data-tab="settings">ตั้งค่า</button>
+      <button role="tab" aria-selected="true" data-tab="bill">
+        <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8h5M9.5 12h5M9.5 16h3"/></svg><span>ออกบิล</span></button>
+      <button role="tab" aria-selected="false" data-tab="meter">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 12l4.2-3.2"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg><span>ค่าน้ำ–ไฟ</span></button>
+      <button role="tab" aria-selected="false" data-tab="tenants">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.3 20c0-3 2.5-5.4 5.7-5.4S14.7 17 14.7 20"/><path d="M16.2 5.3a3.2 3.2 0 0 1 0 6.2"/><path d="M20.7 20c0-2.3-1.4-4.3-3.5-5.1"/></svg><span>ผู้เช่า</span></button>
+      <button role="tab" aria-selected="false" data-tab="template">
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 9h16M10 9v11"/></svg><span>เทมเพลต</span></button>
+      <button role="tab" aria-selected="false" data-tab="summary">
+        <svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-7"/><path d="M3 20h18"/></svg><span>สรุป</span></button>
+      <button role="tab" aria-selected="false" data-tab="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>ตั้งค่า</span></button>
     </div>
   </div>
 
@@ -652,7 +663,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.1.0";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.1.1";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-07";
 var $ = function(s,el){return (el||document).querySelector(s);};
 var $$ = function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));};
