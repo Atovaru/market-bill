@@ -307,6 +307,7 @@
   .brow-cp .field{margin:0}
   .brow-cp .field label{font-size:.74rem}
   .brow-cp .field input{padding:8px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);width:100%;text-align:right}
+  .brow-cp .field input.has{border:1.5px solid #e8792b;background:rgba(232,121,43,.1);color:#e8792b;font-weight:700}
   .brow-cp .btn{padding:8px 10px;font-size:.8rem;white-space:nowrap}
   .brow.miss{border-color:var(--warn)}
 
@@ -360,6 +361,8 @@
     background:var(--accent);color:#fff;box-shadow:var(--shadow);
   }
   .print-toolbar button.sec{background:#fff;color:#333}
+  #sharePdfBtn{background:#1a8f4c}
+  .print-toolbar button[disabled]{opacity:.6;pointer-events:none}
 
   .sheet{
     position:relative;
@@ -709,6 +712,7 @@
 <div id="printRoot">
   <div class="print-toolbar">
     <button id="doPrint">พิมพ์ / บันทึก PDF</button>
+    <button id="sharePdfBtn">แชร์ PDF</button>
     <button class="sec" id="closePrint">ปิด</button>
   </div>
   <div id="sheets"></div>
@@ -727,7 +731,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.3.5";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.3.7";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-08";
 
 /* ---- theme (device-local, ไม่ซิงค์) ---- */
@@ -1617,21 +1621,22 @@ function browEl(t, p, pkey){
     row.appendChild(meterInputs("x"+i+"|"+t.id, ex.label||"ค่าน้ำ (เพิ่ม)", ex.kind));
   });
 
-  // ค้าง / ปรับ
+  // ค้าง / ปรับ — ขอบส้มเมื่อมีค่า
+  function flagCP(inp){ inp.classList.toggle("has", (+inp.value||0) > 0); }
   var cp = document.createElement("div");
   cp.className = "brow-cp";
   var f1 = document.createElement("div"); f1.className="field";
   f1.innerHTML = '<label>ค้างจ่าย</label>';
   var i1 = document.createElement("input"); i1.type="number"; i1.inputMode="numeric";
   i1.value = rec.prevBalance? rec.prevBalance : ""; i1.placeholder="0";
-  i1.oninput = function(){ rec.prevBalance = i1.value===""?0:+i1.value; save("bill", p.key, t.id); recalc(); };
-  f1.appendChild(i1);
+  i1.oninput = function(){ rec.prevBalance = i1.value===""?0:+i1.value; flagCP(i1); save("bill", p.key, t.id); recalc(); };
+  f1.appendChild(i1); flagCP(i1);
   var f2 = document.createElement("div"); f2.className="field";
   f2.innerHTML = '<label>ค่าปรับ</label>';
   var i2 = document.createElement("input"); i2.type="number"; i2.inputMode="numeric";
   i2.value = rec.penalty? rec.penalty : ""; i2.placeholder="0";
-  i2.oninput = function(){ rec.penalty = i2.value===""?0:+i2.value; save("bill", p.key, t.id); recalc(); };
-  f2.appendChild(i2);
+  i2.oninput = function(){ rec.penalty = i2.value===""?0:+i2.value; flagCP(i2); save("bill", p.key, t.id); recalc(); };
+  f2.appendChild(i2); flagCP(i2);
   var pf = document.createElement("button");
   pf.className="btn"; pf.textContent="คิดปรับ";
   pf.onclick = function(){
@@ -1640,6 +1645,7 @@ function browEl(t, p, pkey){
     var late = Math.max(0, (+d) - (+state.settings.dueDay||10));
     rec.penalty = late * (+state.settings.penaltyPerDay||0);
     i2.value = rec.penalty || "";
+    flagCP(i2);
     save("bill", p.key, t.id); recalc();
     toast(late? ("ปรับ "+late+" วัน = "+fmt(rec.penalty)+" บาท") : "ไม่เกินกำหนด");
   };
@@ -2004,6 +2010,93 @@ function openPrint(tenants, period){
   document.body.classList.add("printing");
 }
 function closePrint(){ document.body.classList.remove("printing","report-mode"); }
+
+/* ---------- แชร์ไฟล์ PDF บิล ---------- */
+var _pdfLibs = null;
+function loadPdfLibs(cb){
+  if(_pdfLibs){ cb(_pdfLibs); return; }
+  if(window.html2canvas && window.jspdf && window.jspdf.jsPDF){
+    _pdfLibs = { h2c: window.html2canvas, jsPDF: window.jspdf.jsPDF }; cb(_pdfLibs); return;
+  }
+  var urls = [
+    "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+  ];
+  (function next(i){
+    if(i>=urls.length){
+      if(window.html2canvas && window.jspdf && window.jspdf.jsPDF){
+        _pdfLibs = { h2c: window.html2canvas, jsPDF: window.jspdf.jsPDF }; cb(_pdfLibs);
+      } else { cb(null); }
+      return;
+    }
+    var s = document.createElement("script");
+    s.src = urls[i];
+    s.onload = function(){ next(i+1); };
+    s.onerror = function(){ cb(null); };
+    document.head.appendChild(s);
+  })(0);
+}
+function sharePdf(){
+  var btn = $("#sharePdfBtn");
+  var sheets = $$("#sheets > .sheet, #sheets > .rsheet");
+  if(!sheets.length){ toast("ไม่มีบิลให้แชร์"); return; }
+  var report = document.body.classList.contains("report-mode");
+  var label0 = btn.textContent;
+  btn.disabled = true; btn.textContent = "กำลังสร้าง PDF…";
+  toast("กำลังสร้างไฟล์ PDF…");
+  loadPdfLibs(function(libs){
+    if(!libs){ btn.disabled=false; btn.textContent=label0; toast("โหลดตัวสร้าง PDF ไม่สำเร็จ (เช็กอินเทอร์เน็ต)"); return; }
+    var fmt = report ? [210,148] : [148,210];   // A5 แนวนอน (สรุป) / แนวตั้ง (บิล)
+    var pdf = new libs.jsPDF({ unit:"mm", format: fmt, orientation: report?"landscape":"portrait", compress:true });
+    var pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+    (function one(i){
+      if(i>=sheets.length){
+        try{
+          var name = (report
+              ? ("MarketBillSummary_" + beToAd((_printPeriod||currentPeriod()).y) + String((_printPeriod||currentPeriod()).m).padStart(2,"0"))
+              : billFileName()) + ".pdf";
+          var blob = pdf.output("blob");
+          deliverPdf(blob, name, btn, label0);
+        }catch(e){ btn.disabled=false; btn.textContent=label0; toast("สร้าง PDF ไม่สำเร็จ"); }
+        return;
+      }
+      libs.h2c(sheets[i], { scale:2, backgroundColor:"#ffffff", useCORS:true, logging:false }).then(function(cv){
+        var img = cv.toDataURL("image/jpeg", 0.92);
+        if(i>0) pdf.addPage(fmt, report?"landscape":"portrait");
+        // จัดรูปให้พอดีหน้า คงสัดส่วน
+        var r = Math.min(pw/cv.width, ph/cv.height);
+        var w = cv.width*r, h = cv.height*r;
+        pdf.addImage(img, "JPEG", (pw-w)/2, (ph-h)/2, w, h);
+        one(i+1);
+      }).catch(function(){ btn.disabled=false; btn.textContent=label0; toast("แปลงบิลเป็นรูปไม่สำเร็จ"); });
+    })(0);
+  });
+}
+function deliverPdf(blob, name, btn, label0){
+  var file = null;
+  try{ file = new File([blob], name, { type:"application/pdf" }); }catch(e){}
+  var done = function(){ btn.disabled=false; btn.textContent=label0; };
+  if(file && navigator.canShare && navigator.canShare({ files:[file] }) && navigator.share){
+    navigator.share({ files:[file], title:name.replace(/\.pdf$/,""), text:"บิลค่าเช่า" })
+      .then(function(){ toast("แชร์ไฟล์แล้ว"); })
+      .catch(function(err){
+        if(err && err.name==="AbortError"){ /* ผู้ใช้ยกเลิก */ }
+        else { downloadBlob(blob, name); toast("อุปกรณ์นี้แชร์ไฟล์ไม่ได้ — บันทึกไฟล์แทน"); }
+      })
+      .then(done, done);
+    return;
+  }
+  downloadBlob(blob, name);
+  toast("บันทึกไฟล์ PDF แล้ว");
+  done();
+}
+function downloadBlob(blob, name){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ a.remove(); URL.revokeObjectURL(url); }, 4000);
+}
 
 function sheetEl(bill){
   var s = state.settings, tp = state.template || DEFAULT_TEMPLATE;
@@ -2473,6 +2566,7 @@ function boot(){
     setTimeout(function(){ document.title = orig; }, 1500);
   };
   window.addEventListener("afterprint", function(){ document.title = "Market Bill v"+APP_VERSION; });
+  $("#sharePdfBtn").onclick = sharePdf;
   $("#closePrint").onclick = closePrint;
 
   $("#meterKind").onchange = renderMeter;
