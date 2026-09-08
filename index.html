@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f2ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141714" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Market Bill — ออกบิลค่าเช่าตลาดรายเดือน พิมพ์ A5">
 <title>Market Bill</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%231f7a3d'/%3E%3Crect x='16' y='12' width='32' height='40' rx='3' fill='%23fff'/%3E%3Cpath d='M22 22h20M22 29h20M22 36h13' stroke='%231f7a3d' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>try{var _t=localStorage.getItem('market-bill-theme');if(_t==='light'||_t==='dark')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,8 +73,8 @@
     -webkit-text-size-adjust:100%;
     padding-bottom:env(safe-area-inset-bottom);
   }
-  h1,h2,h3{margin:0;font-weight:700;text-wrap:balance}
-  button{font-family:inherit;font-size:1rem;cursor:pointer}
+  h1,h2,h3{margin:0;font-weight:700;text-wrap:balance;font-family:"Bai Jamjuree","Sarabun",sans-serif;letter-spacing:-.01em}
+  button{font-family:inherit;font-size:1rem;cursor:pointer;-webkit-tap-highlight-color:transparent}
   input,select,textarea{font-family:inherit;font-size:1rem;color:var(--ink)}
   .tnum{font-variant-numeric:tabular-nums}
 
@@ -84,7 +88,7 @@
     margin-bottom:16px;
   }
   .brand{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
-  .brand h1{font-size:1.18rem;letter-spacing:-.01em}
+  .brand h1{font-size:1.3rem;letter-spacing:-.015em}
   .brand .badge{
     font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
     color:var(--accent-ink);background:var(--accent-soft);
@@ -153,10 +157,15 @@
     display:inline-flex;align-items:center;justify-content:center;gap:7px;
     padding:11px 15px;border-radius:11px;border:1px solid var(--line);
     background:var(--surface-2);color:var(--ink);font-weight:600;
+    transition:transform .1s ease, background-color .15s, box-shadow .15s, opacity .15s;
   }
-  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-  .btn.ghost{background:transparent}
-  .btn.danger{color:var(--danger);border-color:var(--danger-soft);background:var(--danger-soft)}
+  .btn:active{transform:translateY(1px) scale(.99)}
+  .btn:disabled{opacity:.5;transform:none}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;
+    box-shadow:0 1px 2px rgba(31,122,61,.25), 0 10px 22px -10px rgba(31,122,61,.5)}
+  .btn.primary:active{box-shadow:0 1px 2px rgba(31,122,61,.25)}
+  .btn.ghost{background:transparent;box-shadow:none}
+  .btn.danger{color:var(--danger);border-color:var(--danger-soft);background:var(--danger-soft);box-shadow:none}
   .btn.full{width:100%}
   .btn.sm{padding:7px 11px;font-size:.85rem;border-radius:9px}
   .btn-row{display:flex;gap:8px;flex-wrap:wrap}
@@ -171,7 +180,7 @@
 
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
-  .stat .v{font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
+  .stat .v{font-size:1.1rem;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
   .stat .k{font-size:.72rem;color:var(--muted);margin-top:2px}
   .stat.warn .v{color:var(--warn)}
 
@@ -731,7 +740,7 @@ var TH_MONTHS = ["มกราคม","กุมภาพันธ์","มี�
 var TH_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
   "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var KEY = "market-bill-v2";
-var APP_VERSION = "3.3.7";   /* bump ทุกครั้งที่แก้ไข */
+var APP_VERSION = "3.4.0";   /* bump ทุกครั้งที่แก้ไข */
 var APP_BUILD = "2026-09-08";
 
 /* ---- theme (device-local, ไม่ซิงค์) ---- */
